@@ -3,6 +3,7 @@ import 'screens/home_screen.dart';
 import 'screens/data_screen.dart';
 import 'screens/calculator_screen.dart';
 import 'screens/live_prices_screen.dart';
+import 'screens/history_screen.dart';
 
 void main() {
   runApp(const OrangeCalculatorApp());
@@ -54,6 +55,8 @@ class _MainScreenState extends State<MainScreen> {
         return CalculatorScreen(onNavigate: navigateTo);
       case 'liveprices':
         return LivePricesScreen(onNavigate: navigateTo);
+      case 'history':
+        return HistoryScreen(onNavigate: navigateTo);
       default:
         return HomeScreen(onNavigate: navigateTo);
     }

@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/orange_type.dart';
+import '../models/price_calculation.dart';
 
 class ApiService {
   // URL ของ backend API
-  static const String baseUrl = 'http://localhost:8000';
+  static const String baseUrl = 'http://localhost:8001';
   
   // ดึงข้อมูลส้มทั้งหมดจาก API
   Future<List<OrangeType>> fetchOranges() async {
@@ -92,6 +93,41 @@ class ApiService {
     } catch (e) {
       print('API is not available: $e');
       return false;
+    }
+  }
+
+  // ดึงประวัติการคำนวณราคา
+  Future<List<PriceCalculation>> fetchCalculations({int limit = 50}) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/calculations?limit=$limit'),
+      );
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
+        return data.map((json) => PriceCalculation.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load calculations');
+      }
+    } catch (e) {
+      print('Error fetching calculations: $e');
+      return [];
+    }
+  }
+
+  // ดึงสถิติ
+  Future<Map<String, dynamic>?> fetchStatistics() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/api/stats'));
+      
+      if (response.statusCode == 200) {
+        return json.decode(utf8.decode(response.bodyBytes));
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching statistics: $e');
+      return null;
     }
   }
 }

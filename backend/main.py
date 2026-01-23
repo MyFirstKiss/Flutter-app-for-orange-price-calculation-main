@@ -1,17 +1,35 @@
 """
 FastAPI backend for scraping orange prices from talaadthai.com
 Filters for: แมนดาริน (Mandarin), เขียวหวาน (Tangerine), สายน้ำผึ้ง (Sai Nam Phueng)
+With SQLite Database Integration
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
 import requests
 from bs4 import BeautifulSoup
 from typing import List, Optional
 from pydantic import BaseModel
 import re
+from datetime import datetime
+
+# Import database components
+from database import (
+    get_db, init_db, 
+    OrangeType as DBOrangeType,
+    OrangeMeasurement as DBOrangeMeasurement,
+    PriceCalculation as DBPriceCalculation
+)
 
 app = FastAPI(title="Orange Price Scraper API")
+
+# Initialize database on startup
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database on application startup"""
+    init_db()
+    print("🗄️  Database initialized")
 
 # Enable CORS for all origins (mobile simulator access)
 app.add_middleware(
@@ -224,114 +242,252 @@ async def health_check():
 
 # Additional endpoints for Flutter app compatibility
 @app.get("/api/oranges")
-async def get_oranges_for_flutter():
-    """Get orange data in Flutter-compatible format"""
-    # Static data for Flutter app (measurements + prices from scraping)
-    orange_types = [
-        {
-            "id": "tangerine",
-            "name": "ส้มสายน้ำผึ้ง",
-            "pricePerKg": 45,
-            "height": "7.5",
-            "radius": "3.8",
-            "diameter": "7.6",
-            "color": "orange",
-            "description": "รสชาติหวานฉ่ำ เนื้อนุ่ม น้ำมาก"
-        },
-        {
-            "id": "green-sweet",
-            "name": "ส้มเขียวหวาน",
-            "pricePerKg": 35,
-            "height": "8.2",
-            "radius": "4.1",
-            "diameter": "8.2",
-            "color": "green",
-            "description": "หวานกรอบ สดชื่น ไม่เปรี้ยว"
-        },
-        {
-            "id": "mandarin",
-            "name": "ส้มแมนดาริน",
-            "pricePerKg": 55,
-            "height": "6.8",
-            "radius": "3.5",
-            "diameter": "7.0",
-            "color": "amber",
-            "description": "หวานหอม ปอกง่าย เนื้อละเอียด"
-        }
-    ]
-    
-    # Try to update prices from scraped data
+async def get_oranges_for_flutter(db: Session = Depends(get_db)):
+    """Get orange data from database in Flutter-compatible format"""
     try:
-        scraped_prices = await get_orange_prices()
-        price_map = {}
+        # Query all orange types with their measurements
+        oranges = db.query(DBOrangeType).all()
         
-        for price in scraped_prices:
-            # Calculate average price
-            avg_price = (price.price_min + price.price_max) / 2
+        result = []
+        for orange in oranges:
+            # Get measurement data
+            measurement = db.query(DBOrangeMeasurement).filter(
+                DBOrangeMeasurement.orange_id == orange.orange_id
+            ).first()
             
-            if "สายน้ำผึ้ง" in price.name:
-                price_map["tangerine"] = avg_price
-            elif "เขียวหวาน" in price.name:
-                price_map["green-sweet"] = avg_price
-            elif "แมนดาริน" in price.name:
-                price_map["mandarin"] = avg_price
+            orange_data = {
+                "id": orange.orange_id,
+                "name": orange.name,
+                "pricePerKg": orange.price_per_kg,
+                "color": orange.color,
+                "grade": orange.grade,
+                "description": f"คุณภาพ {orange.grade}"
+            }
+            
+            # Add measurements if available
+            if measurement:
+                orange_data.update({
+                    "height": measurement.height_cm,
+                    "radius": measurement.radius_cm,
+                    "diameter": measurement.diameter_cm,
+                    "weight_avg_g": measurement.weight_avg_g
+                })
+            
+            result.append(orange_data)
         
-        # Update prices
-        for orange in orange_types:
-            if orange["id"] in price_map:
-                orange["pricePerKg"] = round(price_map[orange["id"]], 2)
-    except:
-        pass  # Use default prices if scraping fails
-    
-    return orange_types
+        # Try to update prices from web scraping
+        try:
+            scraped_prices = await get_orange_prices()
+            price_map = {}
+            
+            for price in scraped_prices:
+                avg_price = (price.price_min + price.price_max) / 2
+                
+                if "สายน้ำผึ้ง" in price.name:
+                    price_map["tangerine"] = avg_price
+                elif "เขียวหวาน" in price.name:
+                    price_map["green-sweet"] = avg_price
+                elif "แมนดาริน" in price.name:
+                    price_map["mandarin"] = avg_price
+            
+            # Update prices in result
+            for orange_data in result:
+                if orange_data["id"] in price_map:
+                    orange_data["pricePerKg"] = round(price_map[orange_data["id"]], 2)
+        except:
+            pass  # Use database prices if scraping fails
+        
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
 @app.get("/api/oranges/{orange_id}")
-async def get_orange_by_id(orange_id: str):
-    """Get single orange by ID"""
-    oranges = await get_oranges_for_flutter()
-    orange = next((o for o in oranges if o["id"] == orange_id), None)
-    if orange:
-        return orange
-    raise HTTPException(status_code=404, detail="Orange not found")
+async def get_orange_by_id(orange_id: str, db: Session = Depends(get_db)):
+    """Get single orange by ID from database"""
+    try:
+        orange = db.query(DBOrangeType).filter(
+            DBOrangeType.orange_id == orange_id
+        ).first()
+        
+        if not orange:
+            raise HTTPException(status_code=404, detail="Orange not found")
+        
+        measurement = db.query(DBOrangeMeasurement).filter(
+            DBOrangeMeasurement.orange_id == orange_id
+        ).first()
+        
+        result = {
+            "id": orange.orange_id,
+            "name": orange.name,
+            "pricePerKg": orange.price_per_kg,
+            "color": orange.color,
+            "grade": orange.grade
+        }
+        
+        if measurement:
+            result.update({
+                "height": measurement.height_cm,
+                "radius": measurement.radius_cm,
+                "diameter": measurement.diameter_cm,
+                "weight_avg_g": measurement.weight_avg_g
+            })
+        
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
 @app.post("/api/calculate")
-async def calculate_price(orange_id: str, weight: float):
-    """Calculate price for given orange type and weight"""
-    oranges = await get_oranges_for_flutter()
-    orange = next((o for o in oranges if o["id"] == orange_id), None)
-    
-    if not orange:
-        raise HTTPException(status_code=404, detail="Orange not found")
-    
-    total_price = weight * orange["pricePerKg"]
-    return {
-        "orange_id": orange_id,
-        "orange_name": orange["name"],
-        "weight": weight,
-        "price_per_kg": orange["pricePerKg"],
-        "total_price": round(total_price, 2)
-    }
+async def calculate_price(orange_id: str, weight: float, db: Session = Depends(get_db)):
+    """Calculate price and save to database"""
+    try:
+        # Get orange from database
+        orange = db.query(DBOrangeType).filter(
+            DBOrangeType.orange_id == orange_id
+        ).first()
+        
+        if not orange:
+            raise HTTPException(status_code=404, detail="Orange not found")
+        
+        # Calculate total price
+        total_price = weight * orange.price_per_kg
+        
+        # Save calculation to database
+        calculation = DBPriceCalculation(
+            orange_type=orange_id,
+            weight_kg=weight,
+            price_per_kg=orange.price_per_kg,
+            total_price=round(total_price, 2),
+            date=datetime.now().date()
+        )
+        db.add(calculation)
+        db.commit()
+        db.refresh(calculation)
+        
+        return {
+            "orange_id": orange_id,
+            "orange_name": orange.name,
+            "weight": weight,
+            "price_per_kg": orange.price_per_kg,
+            "total_price": round(total_price, 2),
+            "calculation_id": calculation.id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Calculation error: {str(e)}")
 
 
 @app.get("/api/prices")
-async def get_live_prices():
-    """Get live prices for Flutter app"""
-    oranges = await get_oranges_for_flutter()
-    return [
-        {
-            "id": o["id"],
-            "name": o["name"],
-            "price": o["pricePerKg"],
-            "source": "Talaadthai.com",
-            "updated_at": "Real-time"
+async def get_live_prices(db: Session = Depends(get_db)):
+    """Get live prices from database for Flutter app"""
+    try:
+        oranges = db.query(DBOrangeType).all()
+        return [
+            {
+                "id": o.orange_id,
+                "name": o.name,
+                "price": o.price_per_kg,
+                "source": "Talaadthai.com",
+                "updated_at": "Real-time"
+            }
+            for o in oranges
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+# New endpoints for database operations
+@app.get("/api/calculations")
+async def get_calculations(limit: int = 10, db: Session = Depends(get_db)):
+    """Get recent price calculations"""
+    try:
+        calculations = db.query(DBPriceCalculation).order_by(
+            DBPriceCalculation.date.desc()
+        ).limit(limit).all()
+        
+        result = []
+        for calc in calculations:
+            orange = db.query(DBOrangeType).filter(
+                DBOrangeType.orange_id == calc.orange_type
+            ).first()
+            
+            result.append({
+                "id": calc.id,
+                "orange_type": calc.orange_type,
+                "orange_name": orange.name if orange else "Unknown",
+                "weight_kg": calc.weight_kg,
+                "price_per_kg": calc.price_per_kg,
+                "total_price": calc.total_price,
+                "date": calc.date.isoformat()
+            })
+        
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@app.get("/api/measurements")
+async def get_all_measurements(db: Session = Depends(get_db)):
+    """Get all orange measurements"""
+    try:
+        measurements = db.query(DBOrangeMeasurement).all()
+        
+        result = []
+        for m in measurements:
+            orange = db.query(DBOrangeType).filter(
+                DBOrangeType.orange_id == m.orange_id
+            ).first()
+            
+            result.append({
+                "id": m.id,
+                "orange_id": m.orange_id,
+                "orange_name": orange.name if orange else "Unknown",
+                "height_cm": m.height_cm,
+                "radius_cm": m.radius_cm,
+                "diameter_cm": m.diameter_cm,
+                "weight_avg_g": m.weight_avg_g
+            })
+        
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@app.get("/api/stats")
+async def get_statistics(db: Session = Depends(get_db)):
+    """Get statistics from database"""
+    try:
+        total_oranges = db.query(DBOrangeType).count()
+        total_calculations = db.query(DBPriceCalculation).count()
+        
+        # Get most popular orange type
+        from sqlalchemy import func
+        popular = db.query(
+            DBPriceCalculation.orange_type,
+            func.count(DBPriceCalculation.id).label('count')
+        ).group_by(DBPriceCalculation.orange_type).order_by(
+            func.count(DBPriceCalculation.id).desc()
+        ).first()
+        
+        return {
+            "total_orange_types": total_oranges,
+            "total_calculations": total_calculations,
+            "most_popular": popular[0] if popular else None,
+            "most_popular_count": popular[1] if popular else 0
         }
-        for o in oranges
-    ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
 if __name__ == "__main__":
     import uvicorn
     # Listen on 0.0.0.0 to allow mobile device connections
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8001)
