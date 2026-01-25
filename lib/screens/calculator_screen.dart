@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/orange_type.dart';
 import '../services/api_service.dart';
-import '../utils/app_theme.dart';
-import '../widgets/common_widgets.dart';
 
 class CalculatorScreen extends StatefulWidget {
   final Function(String) onNavigate;

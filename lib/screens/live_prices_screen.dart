@@ -137,7 +137,7 @@ class _LivePricesScreenState extends State<LivePricesScreen> {
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
-                                              'อัพเดทล่าสุด: ${price['updated_at'] ?? DateTime.now().hour.toString() + ':' + DateTime.now().minute.toString().padLeft(2, '0') + ' น.'}',
+                                              'อัพเดทล่าสุด: ${price['updated_at'] ?? '${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')} น.'}',
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 color: Colors.grey.shade600,

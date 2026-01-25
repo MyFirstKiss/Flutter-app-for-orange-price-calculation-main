@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/orange_type.dart';
 import '../services/api_service.dart';
-import '../utils/app_theme.dart';
-import '../widgets/common_widgets.dart';
 
 class DataScreen extends StatefulWidget {
   final Function(String) onNavigate;
@@ -327,7 +325,7 @@ class _DataScreenState extends State<DataScreen> {
                                   textBaseline: TextBaseline.alphabetic,
                                   children: [
                                     Text(
-                                      item['value'] as String,
+                                      '${item['value']}',
                                       style: const TextStyle(
                                         fontSize: 30,
                                         fontWeight: FontWeight.bold,

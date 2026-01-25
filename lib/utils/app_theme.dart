@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Colors
-  static const Color primaryColor = Color(0xFFFF9800); // Orange
-  static const Color primaryDark = Color(0xFFF57C00);
-  static const Color primaryLight = Color(0xFFFFB74D);
-  static const Color secondaryColor = Color(0xFFF57C00);
+  // Colors - Modern Orange Palette
+  static const Color primaryColor = Color(0xFFFF6B35); // Vibrant Orange
+  static const Color primaryDark = Color(0xFFE5583F);
+  static const Color primaryLight = Color(0xFFFF8C5A);
+  static const Color secondaryColor = Color(0xFFFFA94D);
+  static const Color tertiaryColor = Color(0xFFFFD93D);
   
-  static const Color accentColor = Color(0xFF4CAF50); // Green
-  static const Color accentDark = Color(0xFF388E3C);
+  static const Color accentColor = Color(0xFF4ECDC4); // Modern Teal
+  static const Color accentDark = Color(0xFF3DBDB3);
+  static const Color accentLight = Color(0xFF7DDFDB);
   
-  static const Color backgroundColor = Color(0xFFF8FAFC);
+  static const Color backgroundColor = Color(0xFFF8F9FA);
   static const Color cardBackground = Colors.white;
-  static const Color dividerColor = Color(0xFFE2E8F0);
+  static const Color surfaceColor = Color(0xFFFFFAF5);
+  static const Color dividerColor = Color(0xFFE8EDF2);
   
   static const Color textPrimary = Color(0xFF0F172A);
   static const Color textSecondary = Color(0xFF475569);
@@ -24,21 +27,48 @@ class AppTheme {
   static const Color errorColor = Color(0xFFEF4444);
   static const Color infoColor = Color(0xFF3B82F6);
   
-  // Gradients
+  // Gradients - Modern & Vibrant
   static const LinearGradient orangeGradient = LinearGradient(
-    colors: [Color(0xFFFFB74D), Color(0xFFF57C00)],
+    colors: [Color(0xFFFF6B35), Color(0xFFFFD93D)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+  
+  static const LinearGradient sunsetGradient = LinearGradient(
+    colors: [Color(0xFFFF6B35), Color(0xFFFFA94D), Color(0xFFFFD93D)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+  
+  static const LinearGradient tealGradient = LinearGradient(
+    colors: [Color(0xFF4ECDC4), Color(0xFF44A8A0)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
   
   static const LinearGradient greenGradient = LinearGradient(
-    colors: [Color(0xFF66BB6A), Color(0xFF388E3C)],
+    colors: [Color(0xFF56CCF2), Color(0xFF2F80ED)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+  
+  static const LinearGradient purpleGradient = LinearGradient(
+    colors: [Color(0xFFB06AB3), Color(0xFF4568DC)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
   
   static const LinearGradient cardGradient = LinearGradient(
-    colors: [Color(0xFFFFF3E0), Colors.white],
+    colors: [Color(0xFFFFFAF5), Colors.white],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+  
+  static const LinearGradient glassGradient = LinearGradient(
+    colors: [
+      Color(0x40FFFFFF),
+      Color(0x20FFFFFF),
+    ],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -70,36 +100,67 @@ class AppTheme {
   static const double fontSize5XL = 36.0;
   static const double fontSize6XL = 48.0;
   
-  // Shadows
+  // Shadows - Modern & Soft
   static List<BoxShadow> get shadowSM => [
     BoxShadow(
-      color: Colors.black.withValues(alpha: 0.05),
-      blurRadius: 5,
+      color: Colors.black.withValues(alpha: 0.04),
+      blurRadius: 8,
       offset: const Offset(0, 2),
+      spreadRadius: 0,
     ),
   ];
   
   static List<BoxShadow> get shadowMD => [
     BoxShadow(
-      color: Colors.black.withValues(alpha: 0.1),
-      blurRadius: 10,
+      color: Colors.black.withValues(alpha: 0.08),
+      blurRadius: 16,
       offset: const Offset(0, 4),
+      spreadRadius: -2,
     ),
   ];
   
   static List<BoxShadow> get shadowLG => [
     BoxShadow(
-      color: Colors.black.withValues(alpha: 0.15),
-      blurRadius: 20,
+      color: Colors.black.withValues(alpha: 0.12),
+      blurRadius: 24,
       offset: const Offset(0, 8),
+      spreadRadius: -4,
+    ),
+  ];
+  
+  static List<BoxShadow> get shadowXL => [
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.15),
+      blurRadius: 40,
+      offset: const Offset(0, 12),
+      spreadRadius: -6,
     ),
   ];
   
   static List<BoxShadow> shadowColored(Color color) => [
     BoxShadow(
-      color: color.withValues(alpha: 0.3),
-      blurRadius: 15,
-      offset: const Offset(0, 5),
+      color: color.withValues(alpha: 0.25),
+      blurRadius: 20,
+      offset: const Offset(0, 8),
+      spreadRadius: -2,
+    ),
+  ];
+  
+  static List<BoxShadow> get glowOrange => [
+    BoxShadow(
+      color: primaryColor.withValues(alpha: 0.3),
+      blurRadius: 24,
+      offset: const Offset(0, 0),
+      spreadRadius: 0,
+    ),
+  ];
+  
+  static List<BoxShadow> get glowTeal => [
+    BoxShadow(
+      color: accentColor.withValues(alpha: 0.3),
+      blurRadius: 24,
+      offset: const Offset(0, 0),
+      spreadRadius: 0,
     ),
   ];
   
