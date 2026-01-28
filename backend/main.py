@@ -487,6 +487,35 @@ async def get_statistics(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
+@app.delete("/api/calculations/{calculation_id}")
+async def delete_calculation(calculation_id: int, db: Session = Depends(get_db)):
+    """Delete a price calculation from database"""
+    try:
+        # Find the calculation
+        calculation = db.query(DBPriceCalculation).filter(
+            DBPriceCalculation.id == calculation_id
+        ).first()
+        
+        if not calculation:
+            raise HTTPException(status_code=404, detail="Calculation not found")
+        
+        # Delete the calculation
+        db.delete(calculation)
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": "Calculation deleted successfully",
+            "id": calculation_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Delete error: {str(e)}")
+
+
 if __name__ == "__main__":
     import uvicorn
     # Listen on 0.0.0.0 to allow mobile device connections

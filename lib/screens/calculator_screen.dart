@@ -192,6 +192,18 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                                 ),
                                 borderRadius: BorderRadius.circular(8),
                               ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.asset(
+                                  'assets/${orange.id}.png',
+                                  width: 48,
+                                  height: 48,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const SizedBox();
+                                  },
+                                ),
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(

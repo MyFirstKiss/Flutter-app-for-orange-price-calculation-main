@@ -70,11 +70,67 @@ class _LivePricesScreenState extends State<LivePricesScreen> {
               child: isLoading
                   ? CommonWidgets.buildLoadingIndicator(text: 'กำลังโหลดราคา...')
                   : prices.isEmpty
-                      ? CommonWidgets.buildEmptyState(
-                          icon: Icons.cloud_off,
-                          title: 'ไม่สามารถโหลดข้อมูลได้',
-                          subtitle: 'กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต',
-                          onRetry: _loadPrices,
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(24),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.cloud_off_outlined,
+                                    size: 64,
+                                    color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                const Text(
+                                  'ไม่สามารถโหลดข้อมูลได้',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'กรุณาตรวจสอบการเชื่อมต่อ API\nและให้แน่ใจว่า Backend ทำงานอยู่',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: AppTheme.textSecondary,
+                                    height: 1.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 32),
+                                ElevatedButton.icon(
+                                  onPressed: _loadPrices,
+                                  icon: const Icon(Icons.refresh, size: 20),
+                                  label: const Text(
+                                    'ลองอีกครั้ง',
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.primaryColor,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 32,
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    elevation: 2,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         )
                       : RefreshIndicator(
                           onRefresh: _loadPrices,
@@ -115,10 +171,20 @@ class _LivePricesScreenState extends State<LivePricesScreen> {
                                           ),
                                           shape: BoxShape.circle,
                                         ),
-                                        child: const Center(
-                                          child: Text(
-                                            '🍊',
-                                            style: TextStyle(fontSize: 24),
+                                        child: Center(
+                                          child: ClipOval(
+                                            child: Image.asset(
+                                              'assets/${price['id'] ?? 'oranges'}.png',
+                                              width: 48,
+                                              height: 48,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) {
+                                                return const Text(
+                                                  '🍊',
+                                                  style: TextStyle(fontSize: 24),
+                                                );
+                                              },
+                                            ),
                                           ),
                                         ),
                                       ),

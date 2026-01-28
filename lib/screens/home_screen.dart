@@ -17,26 +17,8 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(height: AppTheme.spacingL),
-                // Header with Icon
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    gradient: AppTheme.orangeGradient,
-                    shape: BoxShape.circle,
-                    boxShadow: AppTheme.shadowColored(AppTheme.primaryColor),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      '🍊',
-                      style: TextStyle(
-                        fontSize: 40,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppTheme.spacingL),
+                const SizedBox(height: AppTheme.spacingXL),
+                
                 const Text(
                   'ข้อมูลผลส้ม',
                   style: AppTheme.heading1,
@@ -71,11 +53,14 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Center(
-                    child: Text(
-                      '🍊',
-                      style: TextStyle(
-                        fontSize: 120,
+                  child: Center(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Image.asset(
+                        'assets/oranges.png',
+                        width: 180,
+                        height: 180,
+                        fit: BoxFit.cover,
                       ),
                     ),
                   ),

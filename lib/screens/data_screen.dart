@@ -63,10 +63,11 @@ class _DataScreenState extends State<DataScreen> {
     ];
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -74,37 +75,40 @@ class _DataScreenState extends State<DataScreen> {
                 Row(
                   children: [
                     Container(
-                      width: 40,
-                      height: 40,
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),
                       child: IconButton(
-                        icon: const Icon(Icons.arrow_back, size: 20),
+                        icon: const Icon(Icons.arrow_back, size: 22),
                         padding: EdgeInsets.zero,
                         onPressed: () => widget.onNavigate('home'),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'ข้อมูลที่จัดเก็บ',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                    const SizedBox(width: 16),
+                    const Expanded(
+                      child: Text(
+                        'ข้อมูลที่จัดเก็บ',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                          letterSpacing: -0.5,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 28),
                 
                 // Loading indicator
                 if (isLoading)
@@ -119,67 +123,81 @@ class _DataScreenState extends State<DataScreen> {
                 const Text(
                   'เลือกชนิดผลส้ม',
                   style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF475569),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                    letterSpacing: -0.3,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 Row(
                   children: availableOranges.map((orange) {
                     final isSelected = selectedOrange.id == orange.id;
                     return Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
                         child: InkWell(
                           onTap: () {
                             setState(() {
                               selectedOrange = orange;
                             });
                           },
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
                           child: Container(
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                             decoration: BoxDecoration(
                               color: isSelected ? Colors.orange.shade50 : Colors.white,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: isSelected ? Colors.orange.shade500 : const Color(0xFFE2E8F0),
-                                width: 2,
+                                color: isSelected ? Colors.orange.shade400 : const Color(0xFFE2E8F0),
+                                width: isSelected ? 2.5 : 1.5,
                               ),
                               boxShadow: isSelected
                                   ? [
                                       BoxShadow(
-                                        color: Colors.orange.withValues(alpha: 0.2),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
+                                        color: Colors.orange.withValues(alpha: 0.25),
+                                        blurRadius: 16,
+                                        offset: const Offset(0, 6),
                                       ),
                                     ]
-                                  : null,
+                                  : [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.04),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
                             ),
                             child: Column(
                               children: [
                                 Container(
-                                  width: 32,
-                                  height: 32,
+                                  width: 40,
+                                  height: 40,
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       colors: orange.colors,
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: orange.colors[0].withValues(alpha: 0.3),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 10),
                                 Text(
                                   orange.name,
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xFF475569),
-                                    height: 1.2,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                    color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                                    height: 1.3,
                                   ),
                                 ),
                               ],
@@ -190,124 +208,153 @@ class _DataScreenState extends State<DataScreen> {
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 24),
-                
-                // Selected Orange Info
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.orange.shade50, Colors.amber.shade50],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.orange.shade200),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        selectedOrange.name,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        selectedOrange.description,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 28),
                 
                 // Orange Image Placeholder
                 Center(
                   child: Container(
-                    width: 160,
-                    height: 160,
+                    width: 180,
+                    height: 180,
                     decoration: BoxDecoration(
-                      color: Colors.orange.shade100,
-                      borderRadius: BorderRadius.circular(24),
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.orange.shade100,
+                          Colors.orange.shade200.withValues(alpha: 0.6),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(32),
                       boxShadow: [
                         BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
+                          color: Colors.orange.withValues(alpha: 0.2),
+                          blurRadius: 24,
+                          offset: const Offset(0, 12),
                         ),
                       ],
                     ),
-                    child: Icon(
-                      Icons.circle,
-                      size: 80,
-                      color: selectedOrange.colors[0],
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(32),
+                      child: Image.asset(
+                        'assets/${selectedOrange.id}.png',
+                        width: 160,
+                        height: 160,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(
+                            Icons.circle,
+                            size: 100,
+                            color: selectedOrange.colors[0],
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
+                
+                // Selected Orange Info
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.orange.shade50, Colors.amber.shade50],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.orange.shade200, width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.orange.withValues(alpha: 0.1),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          selectedOrange.name,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'คุณภาพ A+',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.orange.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
                 
                 // Measurements Section
                 const Text(
                   'ขนาดและมิติ',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF475569),
+                    color: Color(0xFF0F172A),
+                    letterSpacing: -0.5,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
                 
                 ...measurements.map((item) {
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.only(bottom: 14),
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFE8EDF2), width: 1.5),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),
                       child: Row(
                         children: [
                           Container(
-                            width: 56,
-                            height: 56,
+                            width: 64,
+                            height: 64,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: item['colors'] as List<Color>,
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: (item['colors'] as List<Color>)[0].withValues(alpha: 0.3),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
+                                  color: (item['colors'] as List<Color>)[0].withValues(alpha: 0.35),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 6),
                                 ),
                               ],
                             ),
                             child: Icon(
                               item['icon'] as IconData,
                               color: Colors.white,
-                              size: 28,
+                              size: 30,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 18),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -315,11 +362,12 @@ class _DataScreenState extends State<DataScreen> {
                                 Text(
                                   item['label'] as String,
                                   style: const TextStyle(
-                                    fontSize: 14,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
                                     color: Color(0xFF64748B),
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 6),
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.baseline,
                                   textBaseline: TextBaseline.alphabetic,
@@ -327,16 +375,18 @@ class _DataScreenState extends State<DataScreen> {
                                     Text(
                                       '${item['value']}',
                                       style: const TextStyle(
-                                        fontSize: 30,
+                                        fontSize: 32,
                                         fontWeight: FontWeight.bold,
                                         color: Color(0xFF0F172A),
+                                        letterSpacing: -0.5,
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: 6),
                                     Text(
                                       item['unit'] as String,
                                       style: const TextStyle(
-                                        fontSize: 18,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
                                         color: Color(0xFF94A3B8),
                                       ),
                                     ),
@@ -351,6 +401,7 @@ class _DataScreenState extends State<DataScreen> {
                   );
                 }),
                 
+                const SizedBox(height: 8),
                 // Additional Info
                 Container(
                   padding: const EdgeInsets.all(16),

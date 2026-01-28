@@ -49,6 +49,82 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
+  Future<void> _deleteCalculation(PriceCalculation calc) async {
+    // เก็บ index เดิมเพื่อกู้คืนตำแหน่งเดิม
+    final int originalIndex = _calculations.indexOf(calc);
+    
+    if (!mounted) return;
+    
+    setState(() {
+      _calculations.remove(calc);
+    });
+
+    // แสดง Snackbar พร้อมรายละเอียดข้อมูลที่ลบ
+    final snackBar = SnackBar(
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'ลบประวัติสำเร็จ',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${calc.orangeName} • ${calc.weightKg.toStringAsFixed(2)} กก. • ฿${calc.totalPrice.toStringAsFixed(2)}',
+            style: const TextStyle(fontSize: 14),
+          ),
+          Text(
+            _formatDate(calc.date),
+            style: const TextStyle(fontSize: 12, color: Colors.white70),
+          ),
+        ],
+      ),
+      backgroundColor: Colors.red.shade600,
+      duration: const Duration(seconds: 1),
+      behavior: SnackBarBehavior.floating,
+      action: SnackBarAction(
+        label: 'เลิกทำ',
+        textColor: Colors.white,
+        onPressed: () {
+          if (!mounted) return;
+          setState(() {
+            // คืนค่ากลับไปที่ตำแหน่งเดิม
+            _calculations.insert(originalIndex, calc);
+          });
+        },
+      ),
+    );
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    
+    // หลังจาก 1 วินาที ถ้าไม่กด undo จะลบถาวรจาก database
+    Future.delayed(const Duration(seconds: 1), () async {
+      // ตรวจสอบว่ายังถูกลบอยู่หรือไม่ (ไม่ได้กด undo)
+      if (mounted && !_calculations.contains(calc)) {
+        debugPrint('🔄 กำลังลบจาก database: ${calc.orangeName} (ID: ${calc.id})');
+        
+        // เรียก API เพื่อลบจาก database ถาวร
+        try {
+          final success = await _apiService.deleteCalculation(calc.id);
+          if (success) {
+            debugPrint('✅ ลบจาก database สำเร็จ: ${calc.orangeName} (ID: ${calc.id})');
+          } else {
+            debugPrint('❌ ลบจาก database ล้มเหลว: ${calc.orangeName} (ID: ${calc.id})');
+          }
+        } catch (e) {
+          debugPrint('❌ เกิดข้อผิดพลาดในการลบ: $e');
+        }
+      } else {
+        debugPrint('⏭️ ข้ามการลบ (กด undo แล้ว): ${calc.orangeName}');
+      }
+    });
+  }
+
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
@@ -156,7 +232,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.primaryColor.withOpacity(0.3),
+                            color: AppTheme.primaryColor.withValues(alpha: 0.3),
                               blurRadius: 15,
                               offset: const Offset(0, 5),
                             ),
@@ -173,7 +249,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             Container(
                               height: 40,
                               width: 1,
-                              color: Colors.white.withOpacity(0.3),
+                            color: Colors.white.withValues(alpha: 0.3),
                             ),
                             _buildStatItem(
                               icon: Icons.star,
@@ -241,7 +317,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         Text(
           label,
           style: TextStyle(
-            color: Colors.white.withOpacity(0.9),
+            color: Colors.white.withValues(alpha: 0.9),
             fontSize: 14,
           ),
         ),
@@ -252,103 +328,188 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget _buildHistoryCard(PriceCalculation calc) {
     final color = _getOrangeColor(calc.orangeType);
     
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
+    return Dismissible(
+      key: Key(calc.id.toString()),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.red.shade400,
           borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            _showDetailsDialog(calc);
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                // Icon
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [color.withOpacity(0.7), color],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    _getOrangeIcon(calc.orangeType),
-                    color: Colors.white,
-                    size: 32,
+        ),
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 24),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Icon(Icons.delete_outline, color: Colors.white, size: 28),
+            SizedBox(width: 8),
+            Text(
+              'ลบ',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+      onDismissed: (direction) {
+        _deleteCalculation(calc);
+      },
+      confirmDismiss: (direction) async {
+        return await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: const Row(
+                children: [
+                  Icon(Icons.delete_outline, color: Colors.red, size: 28),
+                  SizedBox(width: 12),
+                  Text('ยืนยันการลบ'),
+                ],
+              ),
+              content: Text(
+                'คุณต้องการลบประวัติ "${calc.orangeName}" หรือไม่?',
+                style: const TextStyle(fontSize: 16),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text(
+                    'ยกเลิก',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
                   ),
                 ),
-                const SizedBox(width: 16),
-                
-                // Details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('ลบ', style: TextStyle(fontSize: 16)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              _showDetailsDialog(calc);
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // Icon
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [color.withValues(alpha: 0.7), color],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.asset(
+                        'assets/${calc.orangeType}.png',
+                        width: 56,
+                        height: 56,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(
+                            _getOrangeIcon(calc.orangeType),
+                            color: Colors.white,
+                            size: 32,
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  
+                  // Details
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          calc.orangeName,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${calc.weightKg.toStringAsFixed(2)} กก. × ${calc.pricePerKg.toStringAsFixed(0)} บาท/กก.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _formatDate(calc.date),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Price
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        calc.orangeName,
-                        style: const TextStyle(
-                          fontSize: 18,
+                        '฿${calc.totalPrice.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: color,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        '${calc.weightKg.toStringAsFixed(2)} กก. × ${calc.pricePerKg.toStringAsFixed(0)} บาท/กก.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _formatDate(calc.date),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade500,
-                        ),
+                      Icon(
+                        Icons.chevron_right,
+                        color: Colors.grey.shade400,
                       ),
                     ],
                   ),
-                ),
-                
-                // Price
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '฿${calc.totalPrice.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: color,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Icon(
-                      Icons.chevron_right,
-                      color: Colors.grey.shade400,
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -370,7 +531,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               height: 40,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [color.withOpacity(0.7), color],
+                  colors: [color.withValues(alpha: 0.7), color],
                 ),
                 borderRadius: BorderRadius.circular(10),
               ),
