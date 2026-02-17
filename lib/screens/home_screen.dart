@@ -22,15 +22,15 @@ class HomeScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
               child: Row(
                 children: [
-                  _buildStatCard('${orangeTypes.length}', 'ชนิดผลส้ม',
+                  _buildStatCard('${orangeTypes.length}', 'Orange Types',
                       Icons.emoji_nature_rounded,
                       const Color(0xFFE8723A), const Color(0xFFFFEEE3)),
                   const SizedBox(width: 12),
-                  _buildStatCard('A+', 'คุณภาพ',
+                  _buildStatCard('A+', 'Quality',
                       Icons.workspace_premium_rounded,
                       const Color(0xFF6B8E5A), const Color(0xFFEBF5E4)),
                   const SizedBox(width: 12),
-                  _buildStatCard('Live', 'ราคา',
+                  _buildStatCard('Live', 'Price',
                       Icons.bolt_rounded,
                       const Color(0xFF5B8FB9), const Color(0xFFE4F0FB)),
                 ],
@@ -40,7 +40,7 @@ class HomeScreen extends StatelessWidget {
             // ── Section label ────────────────────────────────
             const Padding(
               padding: EdgeInsets.fromLTRB(24, 28, 24, 14),
-              child: Text('เมนูหลัก',
+              child: Text('Main Menu',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -58,8 +58,8 @@ class HomeScreen extends StatelessWidget {
                       Expanded(
                         child: _buildGridCard(
                           icon: Icons.bar_chart_rounded,
-                          title: 'ข้อมูลส้ม',
-                          subtitle: 'ขนาดและมิติ',
+                          title: 'Orange Data',
+                          subtitle: 'Size & Dimensions',
                           gradientColors: const [Color(0xFFE8723A), Color(0xFFFF9A5C)],
                           onTap: () => onNavigate('data'),
                         ),
@@ -68,8 +68,8 @@ class HomeScreen extends StatelessWidget {
                       Expanded(
                         child: _buildGridCard(
                           icon: Icons.calculate_rounded,
-                          title: 'คำนวณราคา',
-                          subtitle: 'กรอกน้ำหนัก',
+                          title: 'Calculate Price',
+                          subtitle: 'Enter Weight',
                           gradientColors: const [Color(0xFF6B8E5A), Color(0xFF8FB876)],
                           onTap: () => onNavigate('calculator'),
                         ),
@@ -82,7 +82,7 @@ class HomeScreen extends StatelessWidget {
                       Expanded(
                         child: _buildGridCard(
                           icon: Icons.trending_up_rounded,
-                          title: 'ราคาล่าสุด',
+                          title: 'Live Prices',
                           subtitle: 'Real-time API',
                           gradientColors: const [Color(0xFF5B8FB9), Color(0xFF7DB8E8)],
                           onTap: () => onNavigate('liveprices'),
@@ -92,8 +92,8 @@ class HomeScreen extends StatelessWidget {
                       Expanded(
                         child: _buildGridCard(
                           icon: Icons.history_rounded,
-                          title: 'ประวัติ',
-                          subtitle: 'การคำนวณ',
+                          title: 'History',
+                          subtitle: 'Records',
                           gradientColors: const [Color(0xFF9B7DB8), Color(0xFFBFA3D9)],
                           onTap: () => onNavigate('history'),
                         ),
@@ -150,7 +150,7 @@ class HomeScreen extends StatelessWidget {
                               fontWeight: FontWeight.w600)),
                     ),
                     const SizedBox(height: 14),
-                    const Text('ข้อมูลผลส้ม',
+                    const Text('Orange Info',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 34,
@@ -158,7 +158,7 @@ class HomeScreen extends StatelessWidget {
                           letterSpacing: -0.5,
                         )),
                     const SizedBox(height: 6),
-                    Text('คำนวณราคาและติดตาม\nราคาแบบ Real-time',
+                    Text('Calculate prices and track\nreal-time market rates',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.85),
                           fontSize: 15,

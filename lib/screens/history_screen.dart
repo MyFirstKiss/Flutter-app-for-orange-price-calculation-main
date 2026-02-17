@@ -84,138 +84,241 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => widget.onNavigate('home'),
-          tooltip: 'Back to Home',
-        ),
-        title: const Text(
-          'Calculation History',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        backgroundColor: AppTheme.primaryColor,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            onPressed: () => setState(() {}),
-            tooltip: 'Refresh',
-          ),
-        ],
-      ),
-      body: StreamBuilder<List<PriceCalculation>>(
-        stream: _firebaseService.watchHistory(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Load failed: ${snapshot.error}',
-                    style: TextStyle(color: Colors.red.shade700, fontSize: 16),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            );
-          }
-
-          final calculations = snapshot.data ?? [];
-          final typeCounts = <String, int>{};
-          for (final calc in calculations) {
-            typeCounts[calc.orangeType] = (typeCounts[calc.orangeType] ?? 0) + 1;
-          }
-          final mostPopularCount = typeCounts.isEmpty
-              ? 0
-              : typeCounts.values.reduce(max);
-
-          return Column(
-            children: [
-              if (calculations.isNotEmpty)
-                Container(
-                  margin: const EdgeInsets.all(16),
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [AppTheme.primaryColor, AppTheme.primaryDark],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+      body: Column(
+        children: [
+          // ── Hero gradient banner ──────────────────────────
+          _buildHero(),
+          // ── Stream content ────────────────────────────────
+          Expanded(
+            child: StreamBuilder<List<PriceCalculation>>(
+              stream: _firebaseService.watchHistory(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error_outline,
+                            size: 64, color: Colors.red.shade300),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Load failed: ${snapshot.error}',
+                          style: TextStyle(
+                              color: Colors.red.shade700, fontSize: 16),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildStatItem(
-                        icon: Icons.calculate,
-                        label: 'Total',
-                        value: '${calculations.length}',
-                      ),
+                  );
+                }
+
+                final calculations = snapshot.data ?? [];
+                final typeCounts = <String, int>{};
+                for (final calc in calculations) {
+                  typeCounts[calc.orangeType] =
+                      (typeCounts[calc.orangeType] ?? 0) + 1;
+                }
+                final mostPopularCount = typeCounts.isEmpty
+                    ? 0
+                    : typeCounts.values.reduce(max);
+
+                return Column(
+                  children: [
+                    if (calculations.isNotEmpty)
                       Container(
-                        height: 40,
-                        width: 1,
-                        color: Colors.white.withValues(alpha: 0.3),
-                      ),
-                      _buildStatItem(
-                        icon: Icons.star,
-                        label: 'Most Used',
-                        value: mostPopularCount.toString(),
-                      ),
-                    ],
-                  ),
-                ),
-              Expanded(
-                child: calculations.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.history,
-                              size: 80,
-                              color: Colors.grey.shade300,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No calculation history yet',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.grey.shade600,
-                              ),
+                        margin: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 28, vertical: 18),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF9B7DB8), Color(0xFFBFA3D9)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius:
+                              BorderRadius.circular(AppTheme.radiusL),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF9B7DB8)
+                                  .withValues(alpha: 0.3),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
                             ),
                           ],
                         ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: calculations.length,
-                        itemBuilder: (context, index) {
-                          final calc = calculations[index];
-                          return _buildHistoryCard(calc);
-                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildStatItem(
+                              icon: Icons.calculate_rounded,
+                              label: 'Total',
+                              value: '${calculations.length}',
+                            ),
+                            Container(
+                                height: 36,
+                                width: 1,
+                                color: Colors.white.withValues(alpha: 0.3)),
+                            _buildStatItem(
+                              icon: Icons.star_rounded,
+                              label: 'Most Used',
+                              value: mostPopularCount.toString(),
+                            ),
+                          ],
+                        ),
                       ),
+                    Expanded(
+                      child: calculations.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    width: 90,
+                                    height: 90,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFF5F0FB),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                        Icons.history_rounded,
+                                        size: 44,
+                                        color: Color(0xFFBFA3D9)),
+                                  ),
+                                  const SizedBox(height: 18),
+                                  const Text(
+                                    'No calculation history yet',
+                                    style: TextStyle(
+                                        fontSize: 17,
+                                        color: AppTheme.textTertiary,
+                                        fontWeight: FontWeight.w500),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.fromLTRB(
+                                  20, 12, 20, 24),
+                              itemCount: calculations.length,
+                              itemBuilder: (context, index) {
+                                return _buildHistoryCard(
+                                    calculations[index]);
+                              },
+                            ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Purple gradient hero (matches home "History" card) ────────────────
+  Widget _buildHero() {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF9B7DB8), Color(0xFFBFA3D9), Color(0xFFD5C4EC)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(36),
+          bottomRight: Radius.circular(36),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Stack(
+          children: [
+            Positioned(
+              right: -24,
+              bottom: -24,
+              child: Container(
+                width: 130,
+                height: 130,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
               ),
-            ],
-          );
-        },
+            ),
+            Positioned(
+              right: 70,
+              top: -20,
+              child: Container(
+                width: 70,
+                height: 70,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.06),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: () => widget.onNavigate('home'),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.25),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.arrow_back_rounded,
+                              color: Colors.white, size: 20),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => setState(() {}),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.25),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.refresh_rounded,
+                              color: Colors.white, size: 20),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'History',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 30,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    'Calculation records',
+                    style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 15),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -227,21 +330,22 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }) {
     return Column(
       children: [
-        Icon(icon, color: Colors.white, size: 32),
-        const SizedBox(height: 8),
+        Icon(icon, color: Colors.white, size: 28),
+        const SizedBox(height: 6),
         Text(
           value,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
           ),
         ),
         Text(
           label,
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.9),
-            fontSize: 14,
+            color: Colors.white.withValues(alpha: 0.85),
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],

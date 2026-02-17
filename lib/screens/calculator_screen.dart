@@ -2,11 +2,14 @@
 import 'package:flutter/services.dart';
 import '../models/orange_type.dart';
 import '../services/api_service.dart';
+import '../utils/app_theme.dart';
 import 'firebase_service.dart';
 
 class CalculatorScreen extends StatefulWidget {
   final Function(String) onNavigate;
+
   const CalculatorScreen({super.key, required this.onNavigate});
+
   @override
   State<CalculatorScreen> createState() => _CalculatorScreenState();
 }
@@ -20,7 +23,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   double? totalPrice;
   bool isLoading = true;
   bool isCalculating = false;
-  bool isApiConnected = false;
 
   @override
   void initState() {
@@ -31,12 +33,12 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
   Future<void> _loadOranges() async {
     setState(() => isLoading = true);
-    final status = await _apiService.checkApiStatus();
     final result = await _apiService.fetchOranges();
     setState(() {
-      isApiConnected = status;
       availableOranges = result.oranges;
-      if (result.oranges.isNotEmpty) selectedOrange = result.oranges[0];
+      if (result.oranges.isNotEmpty) {
+        selectedOrange = result.oranges[0];
+      }
       isLoading = false;
     });
   }
@@ -49,337 +51,533 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
   Future<void> handleCalculate() async {
     final weight = double.tryParse(weightController.text);
-    if (weight == null || weight <= 0) return;
-    setState(() => isCalculating = true);
-    try {
-      final apiResult = await _apiService.calculatePrice(selectedOrange.id, weight);
-      final calculatedTotal = apiResult.result != null
-          ? (apiResult.result!['total_price'] as num).toDouble()
-          : weight * selectedOrange.pricePerKg;
-      setState(() {
-        totalPrice = calculatedTotal;
-        isCalculating = false;
-      });
+    if (weight != null && weight > 0) {
+      setState(() => isCalculating = true);
+      
       try {
-        await _firebaseService.saveCalculation(
-          orangeType: selectedOrange.id,
-          orangeName: selectedOrange.name,
-          pricePerKg: selectedOrange.pricePerKg,
-          weight: weight,
-          totalPrice: calculatedTotal,
-        );
-      } catch (_) {}
-    } catch (e) {
-      setState(() {
-        totalPrice = weight * selectedOrange.pricePerKg;
-        isCalculating = false;
-      });
+        final apiResult = await _apiService.calculatePrice(selectedOrange.id, weight);
+        final calculatedTotal = apiResult.result != null
+            ? (apiResult.result!['total_price'] as num).toDouble()
+            : weight * selectedOrange.pricePerKg;
+
+        setState(() {
+          totalPrice = calculatedTotal;
+          isCalculating = false;
+        });
+
+        try {
+          await _firebaseService.saveCalculation(
+            orangeType: selectedOrange.id,
+            orangeName: selectedOrange.name,
+            pricePerKg: selectedOrange.pricePerKg,
+            weight: weight,
+            totalPrice: calculatedTotal,
+          );
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to save to Firebase: $e'),
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        // Fallback to local calculation
+        setState(() {
+          totalPrice = weight * selectedOrange.pricePerKg;
+          isCalculating = false;
+        });
+      }
     }
   }
 
-  void handleClear() => setState(() { weightController.clear(); totalPrice = null; });
-
-  Color _colorFor(OrangeType o) {
-    switch (o.id) {
-      case 'green-sweet': return const Color(0xFF6B8E5A);
-      case 'mandarin': return const Color(0xFFD4A443);
-      default: return const Color(0xFFE8723A);
-    }
+  void handleClear() {
+    setState(() {
+      weightController.clear();
+      totalPrice = null;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF8F0),
+      backgroundColor: AppTheme.backgroundColor,
       body: SingleChildScrollView(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // โ”€โ”€ Gradient header โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF6B8E5A), Color(0xFF8FB876), Color(0xFF6B8E5A)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(36),
-                  bottomRight: Radius.circular(36),
-                ),
-              ),
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          _circleBtn(Icons.arrow_back_rounded, () => widget.onNavigate('home')),
-                          const SizedBox(width: 14),
-                          const Text('เธเธณเธเธงเธ“เธฃเธฒเธเธฒ',
-                              style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700)),
-                          const Spacer(),
-                          // API status badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            // ── Hero gradient banner ──────────────────────────
+            _buildHero(),
+            // ── Content ──────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (isLoading)
+                    Center(
+                      child: Container(
+                        width: 52, height: 52,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEDF4E8),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Color(0xFF6B8E5A)),
+                        ),
+                      ),
+                    )
+                  else ...[
+                // ── Orange type selector ─────────────────────
+                    const Text('Select Orange Type', style: AppTheme.label),
+                    const SizedBox(height: 14),
+                    ...availableOranges.map((orange) {
+                      final isSelected = selectedOrange.id == orange.id;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: GestureDetector(
+                          onTap: () => setState(() {
+                            selectedOrange = orange;
+                            totalPrice = null;
+                          }),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.22),
-                              borderRadius: BorderRadius.circular(20),
+                              color: isSelected
+                                  ? const Color(0xFFEDF4E8)
+                                  : AppTheme.cardBackground,
+                              borderRadius:
+                                  BorderRadius.circular(AppTheme.radiusM),
+                              border: Border.all(
+                                color: isSelected
+                                    ? const Color(0xFF6B8E5A)
+                                    : AppTheme.borderColor,
+                                width: isSelected ? 1.5 : 1,
+                              ),
+                              boxShadow: AppTheme.shadowSoft,
                             ),
                             child: Row(
                               children: [
-                                Icon(isApiConnected ? Icons.cloud_done_rounded : Icons.cloud_off_rounded,
-                                    size: 14, color: Colors.white),
-                                const SizedBox(width: 5),
-                                Text(isApiConnected ? 'เน€เธเธทเนเธญเธกเธ•เนเธญ API เธชเธณเน€เธฃเนเธ' : 'Offline',
-                                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: orange.colors,
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Image.asset(
+                                      'assets/${orange.id}.png',
+                                      width: 48,
+                                      height: 48,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              const SizedBox(),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(orange.name,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: isSelected
+                                                ? FontWeight.w700
+                                                : FontWeight.w600,
+                                            color: AppTheme.textPrimary,
+                                          )),
+                                      const SizedBox(height: 2),
+                                      Text('${orange.pricePerKg} THB/kg',
+                                          style: const TextStyle(
+                                              fontSize: 14,
+                                              color: AppTheme.textTertiary)),
+                                    ],
+                                  ),
+                                ),
+                                if (isSelected)
+                                  Container(
+                                    width: 26,
+                                    height: 26,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF6B8E5A),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.check,
+                                        color: Colors.white, size: 16),
+                                  ),
                               ],
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      // price card inside header
-                      if (!isLoading)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.sell_rounded, color: Colors.white, size: 28),
-                              const SizedBox(width: 14),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('เธฃเธฒเธเธฒเธ•เนเธญเธเธดเนเธฅเธเธฃเธฑเธก',
-                                      style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13)),
-                                  Text('${selectedOrange.pricePerKg.toStringAsFixed(1)} เธเธฒเธ—',
-                                      style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w800)),
-                                ],
-                              ),
-                            ],
-                          ),
                         ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+                      );
+                    }),
+                    const SizedBox(height: 24),
 
-            if (isLoading)
-              const Padding(
-                padding: EdgeInsets.all(40),
-                child: CircularProgressIndicator(color: Color(0xFF6B8E5A)),
-              )
-            else ...[
-              // โ”€โ”€ Orange selector โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
-              const Padding(
-                padding: EdgeInsets.fromLTRB(24, 24, 24, 12),
-                child: Align(alignment: Alignment.centerLeft,
-                  child: Text('เน€เธฅเธทเธญเธเธเธเธดเธ”เธเธฅเธชเนเธก',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF2D1B0E)))),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  children: availableOranges.map((orange) {
-                    final isSelected = selectedOrange.id == orange.id;
-                    final c = _colorFor(orange);
-                    return GestureDetector(
-                      onTap: () => setState(() { selectedOrange = orange; totalPrice = null; }),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        margin: const EdgeInsets.only(bottom: 10),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: isSelected ? c.withValues(alpha: 0.08) : Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: isSelected ? c : const Color(0xFFF0E4D8),
-                            width: isSelected ? 2 : 1.5,
-                          ),
-                          boxShadow: [BoxShadow(color: c.withValues(alpha: isSelected ? 0.15 : 0.05), blurRadius: 12, offset: const Offset(0, 4))],
-                        ),
-                        child: Row(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.asset('assets/${orange.id}.png', width: 48, height: 48, fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(width: 48, height: 48,
-                                      decoration: BoxDecoration(color: c.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)))),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(orange.name,
-                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700,
-                                          color: isSelected ? c : const Color(0xFF2D1B0E))),
-                                  Text('${orange.pricePerKg.toStringAsFixed(0)} เธเธฒเธ—/เธเธ.',
-                                      style: TextStyle(fontSize: 13, color: isSelected ? c.withValues(alpha: 0.7) : const Color(0xFF9C8B7A))),
-                                ],
-                              ),
-                            ),
-                            if (isSelected)
-                              Container(
-                                width: 26, height: 26,
-                                decoration: BoxDecoration(color: c, shape: BoxShape.circle),
-                                child: const Icon(Icons.check_rounded, color: Colors.white, size: 16),
-                              ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-
-              // โ”€โ”€ Weight input โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
-              const Padding(
-                padding: EdgeInsets.fromLTRB(24, 20, 24, 10),
-                child: Align(alignment: Alignment.centerLeft,
-                  child: Text('เธเนเธณเธซเธเธฑเธ (เธเธดเนเธฅเธเธฃเธฑเธก)',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF2D1B0E)))),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF6B8E5A), width: 2),
-                    boxShadow: [BoxShadow(color: const Color(0xFF6B8E5A).withValues(alpha: 0.12), blurRadius: 12, offset: const Offset(0, 4))],
-                  ),
-                  child: TextField(
-                    controller: weightController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: Color(0xFF2D1B0E)),
-                    decoration: const InputDecoration(
-                      hintText: '0.00',
-                      hintStyle: TextStyle(color: Color(0xFFBBB0A5), fontSize: 28),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    ),
-                  ),
-                ),
-              ),
-
-              // โ”€โ”€ Buttons โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: GestureDetector(
-                        onTap: isCalculating ? null : handleCalculate,
-                        child: Container(
-                          height: 56,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(colors: [Color(0xFF6B8E5A), Color(0xFF8FB876)]),
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [BoxShadow(color: const Color(0xFF6B8E5A).withValues(alpha: 0.35), blurRadius: 14, offset: const Offset(0, 6))],
-                          ),
-                          child: Center(
-                            child: isCalculating
-                                ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                                : const Text('เธเธณเธเธงเธ“', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 2,
-                      child: GestureDetector(
-                        onTap: handleClear,
-                        child: Container(
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFF0E4D8), width: 1.5),
-                          ),
-                          child: const Center(
-                            child: Text('เธฅเนเธฒเธ', style: TextStyle(color: Color(0xFF6B5744), fontSize: 18, fontWeight: FontWeight.w600)),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // โ”€โ”€ Result card โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
-              if (totalPrice != null) ...[
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                  child: AnimatedOpacity(
-                    opacity: 1.0,
-                    duration: const Duration(milliseconds: 400),
-                    child: Container(
-                      padding: const EdgeInsets.all(24),
+                    // ── Price info card ───────────────────────
+                    Container(
+                      padding: const EdgeInsets.all(22),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFFE8723A), Color(0xFFFF9A5C)],
+                          colors: [Color(0xFF6B8E5A), Color(0xFF8FB876)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [BoxShadow(color: const Color(0xFFE8723A).withValues(alpha: 0.35), blurRadius: 20, offset: const Offset(0, 8))],
+                        borderRadius:
+                            BorderRadius.circular(AppTheme.radiusL),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF6B8E5A)
+                                .withValues(alpha: 0.35),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
                       ),
-                      child: Column(
+                      child: Stack(
                         children: [
-                          Text('เธฃเธฒเธเธฒเธฃเธงเธกเธ—เธฑเนเธเธซเธกเธ”',
-                              style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 15)),
-                          const SizedBox(height: 6),
-                          Text(totalPrice!.toStringAsFixed(2),
-                              style: const TextStyle(color: Colors.white, fontSize: 52, fontWeight: FontWeight.w800)),
-                          const Text('เธเธฒเธ—', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w500)),
-                          const SizedBox(height: 16),
-                          Container(height: 1, color: Colors.white.withValues(alpha: 0.3)),
-                          const SizedBox(height: 14),
-                          _resultRow('เธเธเธดเธ”', selectedOrange.name),
-                          const SizedBox(height: 8),
-                          _resultRow('เธเนเธณเธซเธเธฑเธ', '${weightController.text} เธเธ.'),
-                          const SizedBox(height: 8),
-                          _resultRow('เธฃเธฒเธเธฒ/เธเธ.', '${selectedOrange.pricePerKg.toStringAsFixed(0)} เธเธฒเธ—'),
+                          Positioned(
+                            right: -16,
+                            bottom: -16,
+                            child: Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                          Row(
+                            mainAxisAlignment:
+                                MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                children: [
+                                  Text('Price per kg',
+                                      style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.white
+                                              .withValues(alpha: 0.8))),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${selectedOrange.pricePerKg} THB',
+                                    style: const TextStyle(
+                                        fontSize: 30,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  color:
+                                      Colors.white.withValues(alpha: 0.2),
+                                  borderRadius:
+                                      BorderRadius.circular(14),
+                                ),
+                                child: const Icon(Icons.attach_money,
+                                    color: Colors.white, size: 28),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 32),
-            ],
+                    const SizedBox(height: 24),
+
+                    // ── Weight input ──────────────────────────
+                    const Text('Enter Weight (kg)', style: AppTheme.label),
+                    const SizedBox(height: 12),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppTheme.cardBackground,
+                        borderRadius:
+                            BorderRadius.circular(AppTheme.radiusM),
+                        border: Border.all(
+                            color: AppTheme.borderColor, width: 1.5),
+                        boxShadow: AppTheme.shadowSoft,
+                      ),
+                      child: TextField(
+                        controller: weightController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d+\.?\d{0,2}')),
+                        ],
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.textPrimary),
+                        onTap: () {
+                          // clear on focus if 0
+                        },
+                        decoration: const InputDecoration(
+                          hintText: '0.00',
+                          hintStyle: TextStyle(
+                              color: AppTheme.textTertiary, fontSize: 26),
+                          suffixText: 'kg',
+                          suffixStyle: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                              color: AppTheme.textTertiary),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 18),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // ── Action buttons ────────────────────────
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: ElevatedButton(
+                            onPressed: isCalculating ? null : handleCalculate,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF6B8E5A),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                      AppTheme.radiusM)),
+                              elevation: 3,
+                              shadowColor: const Color(0xFF6B8E5A)
+                                  .withValues(alpha: 0.4),
+                            ),
+                            child: isCalculating
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2))
+                                : const Text('Calculate',
+                                    style: TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w700)),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: OutlinedButton(
+                            onPressed: handleClear,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppTheme.textSecondary,
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 16),
+                              side: const BorderSide(
+                                  color: AppTheme.borderColor, width: 1.5),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                      AppTheme.radiusM)),
+                            ),
+                            child: const Text('Clear',
+                                style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w600)),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // ── Result card ───────────────────────────
+                    if (totalPrice != null) ...[
+                      const SizedBox(height: 24),
+                      AnimatedOpacity(
+                        opacity: 1.0,
+                        duration: const Duration(milliseconds: 500),
+                        child: Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFFFFF0E6),
+                                Color(0xFFFFF8ED)
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius:
+                                BorderRadius.circular(AppTheme.radiusL),
+                            border: Border.all(
+                                color: AppTheme.primaryColor
+                                    .withValues(alpha: 0.2)),
+                            boxShadow: AppTheme.shadowMedium,
+                          ),
+                          child: Column(
+                            children: [
+                              const Text('Total Price',
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      color: AppTheme.textTertiary)),
+                              const SizedBox(height: 8),
+                              Text(
+                                totalPrice!.toStringAsFixed(2),
+                                style: const TextStyle(
+                                    fontSize: 52,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppTheme.primaryColor,
+                                    letterSpacing: -1),
+                              ),
+                              const Text('THB',
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      color: AppTheme.textSecondary,
+                                      fontWeight: FontWeight.w600)),
+                              const SizedBox(height: 20),
+                              Container(
+                                  height: 1,
+                                  color: AppTheme.dividerColor),
+                              const SizedBox(height: 16),
+                              _buildDetailRow(
+                                  'Type', selectedOrange.name),
+                              const SizedBox(height: 8),
+                              _buildDetailRow('Weight',
+                                  '${weightController.text} kg'),
+                              const SizedBox(height: 8),
+                              _buildDetailRow('Price/kg',
+                                  '${selectedOrange.pricePerKg} THB'),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _circleBtn(IconData icon, VoidCallback onTap) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      width: 40, height: 40,
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.25), shape: BoxShape.circle),
-      child: Icon(icon, color: Colors.white, size: 22),
-    ),
-  );
+  // ── Green gradient hero (matches home "Calculate" card) ───────────────
+  Widget _buildHero() {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF6B8E5A), Color(0xFF8FB876), Color(0xFFB5D99C)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(36),
+          bottomRight: Radius.circular(36),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Stack(
+          children: [
+            Positioned(
+              right: -24,
+              bottom: -24,
+              child: Container(
+                width: 130,
+                height: 130,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            Positioned(
+              right: 70,
+              top: -20,
+              child: Container(
+                width: 70,
+                height: 70,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.06),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  GestureDetector(
+                    onTap: () => widget.onNavigate('home'),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.arrow_back_rounded,
+                          color: Colors.white, size: 20),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'Price Calculator',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 30,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    'Select variety · enter weight',
+                    style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 15),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-  Widget _resultRow(String label, String value) => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 14)),
-      Text(value, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
-    ],
-  );
+  Widget _buildDetailRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label,
+            style: const TextStyle(
+                fontSize: 14, color: AppTheme.textTertiary)),
+        Text(value,
+            style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textPrimary)),
+      ],
+    );
+  }
 }
+
