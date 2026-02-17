@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/orange_type.dart';
 import '../services/api_service.dart';
-import '../utils/app_theme.dart';
+import 'firebase_service.dart';
 
 class CalculatorScreen extends StatefulWidget {
   final Function(String) onNavigate;
@@ -15,14 +15,13 @@ class CalculatorScreen extends StatefulWidget {
 
 class _CalculatorScreenState extends State<CalculatorScreen> {
   final ApiService _apiService = ApiService();
+  final FirebaseService _firebaseService = FirebaseService();
   late OrangeType selectedOrange;
   List<OrangeType> availableOranges = orangeTypes;
   final TextEditingController weightController = TextEditingController();
   double? totalPrice;
   bool isLoading = true;
   bool isCalculating = false;
-  bool isOnline = true;
-  bool isUsingLocalData = false;
 
   @override
   void initState() {
@@ -32,36 +31,15 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 
   Future<void> _loadOranges() async {
+    setState(() => isLoading = true);
+    final result = await _apiService.fetchOranges();
     setState(() {
-      isLoading = true;
-      isOnline = true;
-      isUsingLocalData = false;
+      availableOranges = result.oranges;
+      if (result.oranges.isNotEmpty) {
+        selectedOrange = result.oranges[0];
+      }
+      isLoading = false;
     });
-    
-    try {
-      final result = await _apiService.fetchOranges();
-      if (!mounted) return;
-      
-      setState(() {
-        availableOranges = result.oranges;
-        if (result.oranges.isNotEmpty) {
-          selectedOrange = result.oranges[0];
-        }
-        isOnline = result.isFromApi;
-        isUsingLocalData = !result.isFromApi;
-        isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      debugPrint('❌ Error: $e');
-      setState(() {
-        availableOranges = orangeTypes;
-        selectedOrange = orangeTypes[0];
-        isUsingLocalData = true;
-        isOnline = false;
-        isLoading = false;
-      });
-    }
   }
 
   @override
@@ -76,29 +54,38 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       setState(() => isCalculating = true);
       
       try {
-        final result = await _apiService.calculatePrice(selectedOrange.id, weight);
-        if (!mounted) return;
-        
-        if (result.isFromApi && result.result != null) {
-          setState(() {
-            totalPrice = result.result!['total_price'];
-            isCalculating = false;
-            isUsingLocalData = false;
-          });
-        } else {
-          setState(() {
-            totalPrice = weight * selectedOrange.pricePerKg;
-            isCalculating = false;
-            isUsingLocalData = true;
-          });
+        final apiResult = await _apiService.calculatePrice(selectedOrange.id, weight);
+        final calculatedTotal = apiResult.result != null
+            ? (apiResult.result!['total_price'] as num).toDouble()
+            : weight * selectedOrange.pricePerKg;
+
+        setState(() {
+          totalPrice = calculatedTotal;
+          isCalculating = false;
+        });
+
+        try {
+          await _firebaseService.saveCalculation(
+            orangeType: selectedOrange.id,
+            orangeName: selectedOrange.name,
+            pricePerKg: selectedOrange.pricePerKg,
+            weight: weight,
+            totalPrice: calculatedTotal,
+          );
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('บันทึกลง Firebase ไม่สำเร็จ: $e'),
+              ),
+            );
+          }
         }
       } catch (e) {
-        if (!mounted) return;
-        debugPrint('❌ Error: $e');
+        // Fallback to local calculation
         setState(() {
           totalPrice = weight * selectedOrange.pricePerKg;
           isCalculating = false;
-          isUsingLocalData = true;
         });
       }
     }
@@ -114,99 +101,73 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(28.0),
+            padding: const EdgeInsets.all(24.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
+                // Header with Back Button
                 Row(
                   children: [
                     Container(
-                      width: 44,
-                      height: 44,
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
-                        color: AppTheme.cardBackground,
+                        color: Colors.white,
                         shape: BoxShape.circle,
-                        boxShadow: AppTheme.shadowSoft,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: IconButton(
-                        icon: const Icon(Icons.arrow_back_rounded, size: 22, color: AppTheme.textPrimary),
+                        icon: const Icon(Icons.arrow_back, size: 20),
                         padding: EdgeInsets.zero,
                         onPressed: () => widget.onNavigate('home'),
                       ),
                     ),
-                    const SizedBox(width: 14),
-                    const Text('คำนวณราคา', style: AppTheme.heading2),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'คำนวณราคา',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 28),
-                
-                // Status
-                if (!isLoading)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: isUsingLocalData
-                          ? AppTheme.warningColor.withValues(alpha: 0.1)
-                          : AppTheme.accentColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(AppTheme.radiusS),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isUsingLocalData ? Icons.cloud_off_rounded : Icons.cloud_done_rounded,
-                          size: 16,
-                          color: isUsingLocalData ? AppTheme.warningColor : AppTheme.accentColor,
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          isUsingLocalData ? 'ใช้ข้อมูลเริ่มต้น (ออฟไลน์)' : 'เชื่อมต่อ API สำเร็จ',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: isUsingLocalData ? AppTheme.warningColor : AppTheme.accentColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 const SizedBox(height: 24),
                 
+                // Loading indicator
                 if (isLoading)
-                  Center(
+                  const Center(
                     child: Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryLight,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Padding(
-                          padding: EdgeInsets.all(12),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: AppTheme.primaryColor,
-                          ),
-                        ),
-                      ),
+                      padding: EdgeInsets.all(24.0),
+                      child: CircularProgressIndicator(),
                     ),
                   )
                 else ...[
                 // Orange Type Selector
-                const Text('เลือกชนิดผลส้ม', style: AppTheme.label),
-                const SizedBox(height: 14),
+                const Text(
+                  'เลือกชนิดผลส้ม',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF475569),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 
                 ...availableOranges.map((orange) {
                   final isSelected = selectedOrange.id == orange.id;
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.only(bottom: 8),
                     child: InkWell(
                       onTap: () {
                         setState(() {
@@ -214,41 +175,53 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                           totalPrice = null;
                         });
                       },
-                      borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                      borderRadius: BorderRadius.circular(12),
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppTheme.primaryLight : AppTheme.cardBackground,
-                          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                          color: isSelected ? Colors.orange.shade50 : Colors.white,
+                          borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isSelected ? AppTheme.primaryColor.withValues(alpha: 0.4) : Colors.transparent,
-                            width: 1.5,
+                            color: isSelected ? Colors.orange.shade500 : const Color(0xFFE2E8F0),
+                            width: 2,
                           ),
-                          boxShadow: AppTheme.shadowSoft,
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.orange.withValues(alpha: 0.2),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ]
+                              : null,
                         ),
                         child: Row(
                           children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(AppTheme.radiusS),
-                              child: Image.asset(
-                                'assets/${orange.id}.png',
-                                width: 48,
-                                height: 48,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    width: 48,
-                                    height: 48,
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.surfaceColor,
-                                      borderRadius: BorderRadius.circular(AppTheme.radiusS),
-                                    ),
-                                    child: const Icon(Icons.circle, size: 24, color: AppTheme.primaryColor),
-                                  );
-                                },
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: orange.colors,
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.asset(
+                                  'assets/${orange.id}.png',
+                                  width: 48,
+                                  height: 48,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const SizedBox();
+                                  },
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 16),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -256,28 +229,35 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                                   Text(
                                     orange.name,
                                     style: const TextStyle(
-                                      fontSize: 17,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.w600,
-                                      color: AppTheme.textPrimary,
+                                      color: Color(0xFF0F172A),
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: 2),
                                   Text(
                                     '${orange.pricePerKg} บาท/กก.',
-                                    style: const TextStyle(fontSize: 15, color: AppTheme.textTertiary),
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Color(0xFF64748B),
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
                             if (isSelected)
                               Container(
-                                width: 28,
-                                height: 28,
-                                decoration: const BoxDecoration(
-                                  color: AppTheme.primaryColor,
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.shade500,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.check_rounded, color: Colors.white, size: 18),
+                                child: const Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
                               ),
                           ],
                         ),
@@ -285,15 +265,25 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                     ),
                   );
                 }),
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
                 
                 // Price Info Card
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryLight,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusL),
-                    boxShadow: AppTheme.shadowSoft,
+                    gradient: LinearGradient(
+                      colors: [Colors.green.shade500, Colors.green.shade600],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.green.withValues(alpha: 0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -301,112 +291,154 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'ราคาต่อกิโลกรัม',
-                            style: TextStyle(fontSize: 15, color: AppTheme.textTertiary),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.green.shade100,
+                            ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 4),
                           Text(
                             '${selectedOrange.pricePerKg} บาท',
                             style: const TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.primaryColor,
+                              fontSize: 30,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
                           ),
                         ],
                       ),
                       Container(
-                        width: 52,
-                        height: 52,
+                        width: 56,
+                        height: 56,
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.sell_rounded, color: AppTheme.primaryColor, size: 28),
+                        child: const Icon(
+                          Icons.attach_money,
+                          color: Colors.white,
+                          size: 32,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
                 
                 // Weight Input
-                const Text('น้ำหนัก (กิโลกรัม)', style: AppTheme.label),
-                const SizedBox(height: 12),
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppTheme.cardBackground,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                    boxShadow: AppTheme.shadowSoft,
-                  ),
-                  child: TextField(
-                    controller: weightController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                    ],
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.scale, size: 16, color: Color(0xFF475569)),
+                        SizedBox(width: 8),
+                        Text(
+                          'กรอกน้ำหนักผลส้ม',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF475569),
+                          ),
+                        ),
+                      ],
                     ),
-                    decoration: InputDecoration(
-                      hintText: '0.00',
-                      hintStyle: TextStyle(color: AppTheme.textTertiary.withValues(alpha: 0.5), fontSize: 28),
-                      suffixText: 'กก.',
-                      suffixStyle: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.textTertiary,
+                    const SizedBox(height: 12),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.green.shade500, width: 2),
                       ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                      child: TextField(
+                        controller: weightController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                        ],
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: '0.00',
+                          suffixText: 'กก.',
+                          suffixStyle: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF94A3B8),
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
                 
-                // Buttons
+                // Action Buttons
                 Row(
                   children: [
                     Expanded(
-                      flex: 3,
                       child: ElevatedButton(
                         onPressed: isCalculating ? null : handleCalculate,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryColor,
+                          backgroundColor: Colors.green.shade500,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          elevation: 2,
-                          shadowColor: AppTheme.primaryColor.withValues(alpha: 0.3),
+                          elevation: 5,
+                          shadowColor: Colors.green.withValues(alpha: 0.3),
                         ),
                         child: isCalculating
                             ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
                               )
-                            : const Text('คำนวณ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                            : const Text(
+                                'คำนวณ',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                       ),
                     ),
-                    const SizedBox(width: 14),
+                    const SizedBox(width: 12),
                     Expanded(
-                      flex: 2,
                       child: OutlinedButton(
                         onPressed: handleClear,
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppTheme.textSecondary,
-                          padding: const EdgeInsets.symmetric(vertical: 18),
-                          side: const BorderSide(color: AppTheme.borderColor, width: 1.5),
+                          foregroundColor: const Color(0xFF475569),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: const BorderSide(
+                            color: Color(0xFFE2E8F0),
+                            width: 2,
+                          ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text('ล้าง', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                        child: const Text(
+                          'ล้างข้อมูล',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -414,42 +446,66 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                 
                 // Result Card
                 if (totalPrice != null) ...[
-                  const SizedBox(height: 32),
-                  Container(
-                    padding: const EdgeInsets.all(28),
-                    decoration: BoxDecoration(
-                      color: AppTheme.cardBackground,
-                      borderRadius: BorderRadius.circular(AppTheme.radiusL),
-                      boxShadow: AppTheme.shadowMedium,
-                    ),
-                    child: Column(
-                      children: [
-                        const Text(
-                          'ราคารวมทั้งหมด',
-                          style: TextStyle(fontSize: 15, color: AppTheme.textTertiary),
+                  const SizedBox(height: 24),
+                  AnimatedOpacity(
+                    opacity: totalPrice != null ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 500),
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.orange.shade50, Colors.amber.shade50],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        const SizedBox(height: 10),
-                        Text(
-                          totalPrice!.toStringAsFixed(2),
-                          style: const TextStyle(
-                            fontSize: 48,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.primaryColor,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.orange.shade200),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.orange.withValues(alpha: 0.2),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
                           ),
-                        ),
-                        const Text(
-                          'บาท',
-                          style: TextStyle(fontSize: 18, color: AppTheme.textSecondary),
-                        ),
-                        const SizedBox(height: 24),
-                        Container(height: 1, color: AppTheme.dividerColor),
-                        const SizedBox(height: 20),
-                        _buildDetailRow('ชนิด:', selectedOrange.name),
-                        const SizedBox(height: 12),
-                        _buildDetailRow('น้ำหนัก:', '${weightController.text} กก.'),
-                        const SizedBox(height: 12),
-                        _buildDetailRow('ราคา/กก.:', '${selectedOrange.pricePerKg} บาท'),
-                      ],
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          const Text(
+                            'ราคารวมทั้งหมด',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            totalPrice!.toStringAsFixed(2),
+                            style: TextStyle(
+                              fontSize: 48,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.orange.shade600,
+                            ),
+                          ),
+                          const Text(
+                            'บาท',
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: Color(0xFF475569),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            height: 1,
+                            color: Colors.orange.shade200,
+                          ),
+                          const SizedBox(height: 16),
+                          _buildDetailRow('ชนิด:', selectedOrange.name),
+                          const SizedBox(height: 8),
+                          _buildDetailRow('น้ำหนัก:', '${weightController.text} กก.'),
+                          const SizedBox(height: 8),
+                          _buildDetailRow('ราคา/กก.:', '${selectedOrange.pricePerKg} บาท'),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -466,12 +522,24 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 16, color: AppTheme.textTertiary)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Color(0xFF64748B),
+          ),
+        ),
         Text(
           value,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF0F172A),
+          ),
         ),
       ],
     );
   }
 }
+
+

@@ -1,6 +1,41 @@
 # วิธีการติดตั้งและรันโปรเจกต์ Flutter (Android & iOS)
 
-## 1. ติดตั้ง Flutter SDK
+## ภาพรวม
+
+โปรเจกต์นี้มี 2 ส่วน ต้องรันทั้งคู่:
+
+| ส่วน | เทคโนโลยี | หน้าที่ |
+|------|-----------|---------|
+| **Backend** | Python + FastAPI | API ราคาส้ม, ฐานข้อมูล |
+| **Frontend** | Flutter | แอปมือถือ Android/iOS |
+
+---
+
+## ขั้นตอนที่ 1: ติดตั้ง Python (Backend)
+
+ต้องการ Python 3.11+ — ดาวน์โหลดที่ https://www.python.org/downloads/
+
+## ขั้นตอนที่ 2: รัน Backend
+
+### Windows
+```powershell
+cd backend
+.\start.ps1
+```
+
+### macOS / Linux
+```bash
+cd backend
+bash start.sh
+```
+
+> Script จะทำทุกอย่างอัตโนมัติ: ติดตั้ง packages → เติมข้อมูล database → เปิด server
+
+**ตรวจสอบว่า backend ทำงาน:** เปิด http://localhost:8001 ใน browser จะเห็น `{"message": "Orange Calculator API"}`
+
+---
+
+## ขั้นตอนที่ 3: ติดตั้ง Flutter SDK
 
 หากยังไม่มี Flutter ให้ติดตั้งก่อน:
 
@@ -16,7 +51,7 @@ git clone https://github.com/flutter/flutter.git -b stable
 ### เพิ่ม Flutter ใน PATH
 เพิ่ม path ของ Flutter bin folder ให้กับระบบของคุณ
 
-## 2. ตรวจสอบการติดตั้ง
+## ขั้นตอนที่ 4: ตรวจสอบ Flutter
 
 ```bash
 flutter doctor
@@ -24,7 +59,7 @@ flutter doctor
 
 คำสั่งนี้จะแสดงสถานะของการติดตั้ง ให้แก้ไขปัญหาที่พบ (ถ้ามี)
 
-## 3. ติดตั้ง Dependencies ของโปรเจกต์
+## ขั้นตอนที่ 5: ติดตั้ง Flutter Dependencies
 
 ในโฟลเดอร์โปรเจกต์ให้รันคำสั่ง:
 
@@ -32,7 +67,9 @@ flutter doctor
 flutter pub get
 ```
 
-## 4. รันโปรเจกต์
+## ขั้นตอนที่ 6: รันแอป Flutter
+
+> ⚠️ ต้องรัน Backend ก่อน (ขั้นตอนที่ 2) ไม่เช่นนั้นหน้าราคาล่าสุดจะไม่แสดงข้อมูล
 
 ### รันบน Android Emulator
 ```bash
@@ -46,7 +83,7 @@ flutter run -d android
 flutter run -d ios
 ```
 
-## 5. สร้างไฟล์สำหรับ Production
+## ขั้นตอนที่ 7: สร้างไฟล์สำหรับ Production
 
 ### สำหรับ Android (APK)
 ```bash
@@ -66,7 +103,7 @@ flutter build ios --release
 ```
 ไฟล์จะอยู่ที่ Xcode project สามารถ upload ผ่าน Xcode หรือ Transporter
 
-## 6. การ Debug
+## การ Debug
 
 ### รัน Debug Mode
 ```bash
@@ -82,13 +119,13 @@ flutter logs
 เมื่อแอปกำลังรันอยู่ กด `r` ใน terminal เพื่อ hot reload
 กด `R` เพื่อ hot restart
 
-## 7. เคล็ดลับ
+## เคล็ดลับ
 
 - ใช้ `flutter pub upgrade` เพื่ออัพเดท packages
 - ใช้ `flutter clean` เพื่อลบ build cache หากมีปัญหา
 - ใช้ `flutter analyze` เพื่อตรวจสอบโค้ด
 
-## 8. ปัญหาที่อาจพบ
+## ปัญหาที่อาจพบ
 
 ### ปัญหา: "No devices found"
 **แก้ไข**: ตรวจสอบว่าเปิด emulator หรือเชื่อมต่ออุปกรณ์แล้ว
@@ -103,6 +140,21 @@ flutter clean
 flutter pub get
 flutter pub upgrade
 ```
+
+### ปัญหา: Backend ขึ้น "port 8001 already in use"
+**แก้ไข**: ใช้ start.ps1 / start.sh ซึ่ง kill port อัตโนมัติ หรือรันด้วยตัวเอง:
+```powershell
+# Windows
+$proc = Get-NetTCPConnection -LocalPort 8001 | Select-Object -First 1
+Stop-Process -Id $proc.OwningProcess -Force
+```
+
+### ปัญหา: หน้า "ราคาล่าสุด" ขึ้น error
+**แก้ไข**: ตรวจสอบว่า backend รันอยู่ที่ http://localhost:8001
+
+### ปัญหา: รันบนมือถือจริง (ไม่ใช่ Emulator) แล้ว API ไม่ตอบ
+**สาเหตุ**: แอปใช้ `10.0.2.2:8001` ซึ่งใช้ได้เฉพาะ Android Emulator เท่านั้น  
+**แก้ไข**: ต้องเปลี่ยน baseUrl ใน `lib/services/api_service.dart` เป็น IP จริงของเครื่อง เช่น `http://192.168.1.x:8001`
 
 ## การติดตั้ง Android Emulator (ถ้ายังไม่มี)
 
@@ -119,12 +171,15 @@ flutter emulators --launch <emulator-id>
 
 ---
 
-**เริ่มต้นใช้งาน**
-
-หลังจากติดตั้งเรียบร้อยแล้ว ให้รันคำสั่ง:
+**สรุปขั้นตอนการเริ่มต้นใช้งาน**
 
 ```bash
-cd orange-calculator-app-flutter
+# Terminal 1 — เปิด Backend ก่อน
+cd backend
+.\start.ps1          # Windows
+# bash start.sh       # macOS/Linux
+
+# Terminal 2 — เปิดแอป Flutter
 flutter pub get
 flutter run
 ```
