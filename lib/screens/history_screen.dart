@@ -1,4 +1,4 @@
-import 'dart:math';
+﻿import 'dart:math';
 import 'package:flutter/material.dart';
 import '../models/price_calculation.dart';
 import '../utils/app_theme.dart';
@@ -44,11 +44,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final difference = now.difference(date);
 
     if (difference.inDays == 0) {
-      return 'วันนี้ ${DateFormat('HH:mm').format(date)}';
+      return 'Today ${DateFormat('HH:mm').format(date)}';
     } else if (difference.inDays == 1) {
-      return 'เมื่อวาน ${DateFormat('HH:mm').format(date)}';
+      return 'Yesterday ${DateFormat('HH:mm').format(date)}';
     } else if (difference.inDays < 7) {
-      return '${difference.inDays} วันที่แล้ว';
+      return '${difference.inDays} days ago';
     } else {
       return DateFormat('dd/MM/yyyy HH:mm').format(date);
     }
@@ -88,10 +88,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => widget.onNavigate('home'),
-          tooltip: 'กลับหน้าหลัก',
+          tooltip: 'Back to Home',
         ),
         title: const Text(
-          'ประวัติการคำนวณ',
+          'Calculation History',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -104,7 +104,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: () => setState(() {}),
-            tooltip: 'รีเฟรช',
+            tooltip: 'Refresh',
           ),
         ],
       ),
@@ -166,7 +166,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     children: [
                       _buildStatItem(
                         icon: Icons.calculate,
-                        label: 'ทั้งหมด',
+                        label: 'Total',
                         value: '${calculations.length}',
                       ),
                       Container(
@@ -176,7 +176,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       ),
                       _buildStatItem(
                         icon: Icons.star,
-                        label: 'ยอดนิยม',
+                        label: 'Most Used',
                         value: mostPopularCount.toString(),
                       ),
                     ],
@@ -195,7 +195,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'ยังไม่มีประวัติการคำนวณ',
+                              'No calculation history yet',
                               style: TextStyle(
                                 fontSize: 18,
                                 color: Colors.grey.shade600,
@@ -252,7 +252,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final color = _getOrangeColor(calc.orangeType);
     
     return Dismissible(
-      key: Key(calc.id.toString()),
+      key: Key(calc.docId ?? calc.id.toString()),
       direction: DismissDirection.endToStart,
       background: Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -268,7 +268,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             Icon(Icons.delete_outline, color: Colors.white, size: 28),
             SizedBox(width: 8),
             Text(
-              'ลบ',
+              'Delete',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 18,
@@ -293,18 +293,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 children: [
                   Icon(Icons.delete_outline, color: Colors.red, size: 28),
                   SizedBox(width: 12),
-                  Text('ยืนยันการลบ'),
+                  Text('Confirm Delete'),
                 ],
               ),
               content: Text(
-                'คุณต้องการลบประวัติ "${calc.orangeName}" หรือไม่?',
+                'Delete "${calc.orangeName}" from history?',
                 style: const TextStyle(fontSize: 16),
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
                   child: Text(
-                    'ยกเลิก',
+                    'Cancel',
                     style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
                   ),
                 ),
@@ -317,7 +317,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text('ลบ', style: TextStyle(fontSize: 16)),
+                  child: const Text('Delete', style: TextStyle(fontSize: 16)),
                 ),
               ],
             );
@@ -394,7 +394,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${calc.weightKg.toStringAsFixed(2)} กก. × ${calc.pricePerKg.toStringAsFixed(0)} บาท/กก.',
+                          '${calc.weightKg.toStringAsFixed(2)} kg × ${calc.pricePerKg.toStringAsFixed(0)} THB/kg',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey.shade600,
@@ -477,18 +477,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildDetailRow('น้ำหนัก', '${calc.weightKg.toStringAsFixed(2)} กก.'),
+            _buildDetailRow('Weight', '${calc.weightKg.toStringAsFixed(2)} kg'),
             const Divider(),
-            _buildDetailRow('ราคาต่อกิโลกรัม', '฿${calc.pricePerKg.toStringAsFixed(2)}'),
+            _buildDetailRow('Price per kg', '฿${calc.pricePerKg.toStringAsFixed(2)}'),
             const Divider(),
             _buildDetailRow(
-              'ราคารวม',
+              'Total Price',
               '฿${calc.totalPrice.toStringAsFixed(2)}',
               isTotal: true,
             ),
             const Divider(),
             _buildDetailRow(
-              'วันที่',
+              'Date',
               DateFormat('dd/MM/yyyy HH:mm:ss').format(calc.date),
             ),
           ],
@@ -496,7 +496,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('ปิด'),
+            child: const Text('Close'),
           ),
         ],
       ),

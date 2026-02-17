@@ -1,13 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../models/orange_type.dart';
 import '../services/api_service.dart';
-import '../utils/app_theme.dart';
 
 class DataScreen extends StatefulWidget {
   final Function(String) onNavigate;
-
   const DataScreen({super.key, required this.onNavigate});
-
   @override
   State<DataScreen> createState() => _DataScreenState();
 }
@@ -28,329 +25,260 @@ class _DataScreenState extends State<DataScreen> {
   Future<void> _loadOranges() async {
     if (!mounted) return;
     setState(() => isLoading = true);
-    
     try {
       final result = await _apiService.fetchOranges();
       if (!mounted) return;
       setState(() {
         availableOranges = result.oranges;
-        if (result.oranges.isNotEmpty) {
-          selectedOrange = result.oranges[0];
-        }
+        if (result.oranges.isNotEmpty) selectedOrange = result.oranges[0];
         isLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
+    }
+  }
+
+  Color get _orangeColor {
+    switch (selectedOrange.id) {
+      case 'green-sweet': return const Color(0xFF6B8E5A);
+      case 'mandarin': return const Color(0xFFD4A443);
+      default: return const Color(0xFFE8723A);
+    }
+  }
+
+  Color get _orangeColorDark {
+    switch (selectedOrange.id) {
+      case 'green-sweet': return const Color(0xFF4A6B3A);
+      case 'mandarin': return const Color(0xFFB8892E);
+      default: return const Color(0xFFD4612E);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final measurements = [
-      {
-        'icon': Icons.straighten_rounded,
-        'label': 'ความสูง',
-        'value': selectedOrange.height,
-        'unit': 'ซม.',
-        'color': AppTheme.primaryColor,
-      },
-      {
-        'icon': Icons.circle_outlined,
-        'label': 'รัศมี',
-        'value': selectedOrange.radius,
-        'unit': 'ซม.',
-        'color': const Color(0xFF9B7DB8),
-      },
-      {
-        'icon': Icons.open_in_full_rounded,
-        'label': 'เส้นผ่านศูนย์กลาง',
-        'value': selectedOrange.diameter,
-        'unit': 'ซม.',
-        'color': const Color(0xFF5B8FB9),
-      },
+      {'icon': Icons.straighten_rounded, 'label': 'เธเธงเธฒเธกเธชเธนเธ', 'value': selectedOrange.height, 'unit': 'เธเธก.', 'color': const Color(0xFFE8723A), 'bg': const Color(0xFFFFEEE3)},
+      {'icon': Icons.circle_outlined, 'label': 'เธฃเธฑเธจเธกเธต', 'value': selectedOrange.radius, 'unit': 'เธเธก.', 'color': const Color(0xFF9B7DB8), 'bg': const Color(0xFFF3EDFC)},
+      {'icon': Icons.open_in_full_rounded, 'label': 'เน€เธชเนเธเธเนเธฒเธเธจเธนเธเธขเนเธเธฅเธฒเธ', 'value': selectedOrange.diameter, 'unit': 'เธเธก.', 'color': const Color(0xFF5B8FB9), 'bg': const Color(0xFFE4F0FB)},
     ];
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppTheme.cardBackground,
-                        shape: BoxShape.circle,
-                        boxShadow: AppTheme.shadowSoft,
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back_rounded, size: 22, color: AppTheme.textPrimary),
-                        padding: EdgeInsets.zero,
-                        onPressed: () => widget.onNavigate('home'),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    const Expanded(
-                      child: Text('ข้อมูลที่จัดเก็บ', style: AppTheme.heading2),
-                    ),
-                  ],
+      backgroundColor: const Color(0xFFFFF8F0),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // โ”€โ”€ Gradient header โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [_orangeColor, _orangeColorDark.withValues(alpha: 0.85), _orangeColor.withValues(alpha: 0.7)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                const SizedBox(height: 32),
-                
-                if (isLoading)
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryLight,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Padding(
-                          padding: EdgeInsets.all(12),
-                          child: CircularProgressIndicator(strokeWidth: 2.5, color: AppTheme.primaryColor),
-                        ),
-                      ),
-                    ),
-                  ),
-                if (!isLoading) ...[
-                // Orange Selector
-                const Text('เลือกชนิดผลส้ม', style: AppTheme.label),
-                const SizedBox(height: 16),
-                Row(
-                  children: availableOranges.map((orange) {
-                    final isSelected = selectedOrange.id == orange.id;
-                    return Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 5),
-                        child: InkWell(
-                          onTap: () {
-                            setState(() {
-                              selectedOrange = orange;
-                            });
-                          },
-                          borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 10),
-                            decoration: BoxDecoration(
-                              color: isSelected ? AppTheme.primaryLight : AppTheme.cardBackground,
-                              borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                              border: isSelected ? Border.all(
-                                color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                                width: 1.5,
-                              ) : null,
-                              boxShadow: AppTheme.shadowSoft,
-                            ),
-                            child: Column(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Image.asset(
-                                    'assets/${orange.id}.png',
-                                    width: 44,
-                                    height: 44,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(
-                                        width: 44,
-                                        height: 44,
-                                        decoration: BoxDecoration(
-                                          color: AppTheme.surfaceColor,
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  orange.name,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                    color: isSelected ? AppTheme.textPrimary : AppTheme.textTertiary,
-                                    height: 1.3,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(36),
+                  bottomRight: Radius.circular(36),
                 ),
-                const SizedBox(height: 32),
-                
-                // Orange Image
-                Center(
-                  child: Container(
-                    width: 180,
-                    height: 180,
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryLight,
-                      borderRadius: BorderRadius.circular(AppTheme.radiusXL),
-                      boxShadow: AppTheme.shadowMedium,
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusXL),
-                      child: Image.asset(
-                        'assets/${selectedOrange.id}.png',
-                        width: 180,
-                        height: 180,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Icon(
-                            Icons.circle,
-                            size: 80,
-                            color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                
-                // Name & Grade
-                Center(
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
                   child: Column(
                     children: [
-                      Text(
-                        selectedOrange.name,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
-                        ),
+                      // top bar
+                      Row(
+                        children: [
+                          _circleButton(Icons.arrow_back_rounded, () => widget.onNavigate('home')),
+                          const SizedBox(width: 14),
+                          const Text('เธเนเธญเธกเธนเธฅเธ—เธตเนเธเธฑเธ”เน€เธเนเธ',
+                              style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700)),
+                        ],
                       ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppTheme.accentLight,
-                          borderRadius: BorderRadius.circular(20),
+                      const SizedBox(height: 24),
+                      if (!isLoading) ...[
+                        // Selector pills
+                        Row(
+                          children: availableOranges.map((orange) {
+                            final isSelected = selectedOrange.id == orange.id;
+                            return Expanded(
+                              child: GestureDetector(
+                                onTap: () => setState(() => selectedOrange = orange),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.asset('assets/${orange.id}.png',
+                                            width: 40, height: 40, fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) => const Icon(Icons.circle, size: 40, color: Colors.white54)),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(orange.name,
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                            color: isSelected ? _orangeColor : Colors.white,
+                                          )),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
                         ),
-                        child: const Text(
-                          'คุณภาพ A+',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.accentColor,
-                          ),
+                        const SizedBox(height: 20),
+                        // Big orange image
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 100, height: 100,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withValues(alpha: 0.2),
+                                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 20, offset: const Offset(0, 8))],
+                              ),
+                              child: ClipOval(
+                                child: Image.asset('assets/${selectedOrange.id}.png', fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => const Icon(Icons.circle, size: 60, color: Colors.white54)),
+                              ),
+                            ),
+                            const SizedBox(width: 20),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(selectedOrange.name,
+                                    style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800)),
+                                const SizedBox(height: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.25),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text('เธเธธเธ“เธ เธฒเธ ${selectedOrange.grade ?? "A+"}',
+                                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                                ),
+                                const SizedBox(height: 6),
+                                Text('เธฟ${selectedOrange.pricePerKg.toStringAsFixed(0)}/เธเธ.',
+                                    style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 16, fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          ],
                         ),
-                      ),
+                      ],
+                      if (isLoading)
+                        const Padding(
+                          padding: EdgeInsets.all(24),
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                        ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 36),
-                
-                // Measurements
-                const Text('ขนาดและมิติ', style: AppTheme.label),
-                const SizedBox(height: 16),
-                
-                ...measurements.map((item) {
-                  final color = item['color'] as Color;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
+              ),
+            ),
+
+            // โ”€โ”€ Measurements โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
+            if (!isLoading) ...[
+              const Padding(
+                padding: EdgeInsets.fromLTRB(24, 24, 24, 12),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('เธเธเธฒเธ”เนเธฅเธฐเธกเธดเธ•เธด',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF2D1B0E))),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: measurements.map((item) {
+                    final color = item['color'] as Color;
+                    final bg = item['bg'] as Color;
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
-                        color: AppTheme.cardBackground,
-                        borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                        boxShadow: AppTheme.shadowSoft,
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.10), blurRadius: 14, offset: const Offset(0, 4))],
                       ),
                       child: Row(
                         children: [
                           Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(AppTheme.radiusS),
-                            ),
+                            width: 48, height: 48,
+                            decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
                             child: Icon(item['icon'] as IconData, color: color, size: 24),
                           ),
-                          const SizedBox(width: 18),
+                          const SizedBox(width: 16),
                           Expanded(
-                            child: Text(
-                              item['label'] as String,
-                              style: const TextStyle(fontSize: 16, color: AppTheme.textSecondary),
-                            ),
+                            child: Text(item['label'] as String,
+                                style: const TextStyle(fontSize: 16, color: Color(0xFF6B5744), fontWeight: FontWeight.w500)),
                           ),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.baseline,
                             textBaseline: TextBaseline.alphabetic,
                             children: [
-                              Text(
-                                '${item['value']}',
-                                style: const TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                item['unit'] as String,
-                                style: const TextStyle(fontSize: 15, color: AppTheme.textTertiary),
-                              ),
+                              Text('${item['value']}',
+                                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: color)),
+                              const SizedBox(width: 4),
+                              Text(item['unit'] as String,
+                                  style: const TextStyle(fontSize: 14, color: Color(0xFF9C8B7A))),
                             ],
                           ),
                         ],
                       ),
-                    ),
-                  );
-                }),
-                
-                const SizedBox(height: 10),
-                // Note
-                Container(
-                  padding: const EdgeInsets.all(18),
+                    );
+                  }).toList(),
+                ),
+              ),
+              // Info note
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppTheme.surfaceColor,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                    color: const Color(0xFFFFF0E6),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.info_outline_rounded,
-                        size: 20,
-                        color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                      ),
-                      const SizedBox(width: 14),
+                      const Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFFE8723A)),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'ข้อมูลที่แสดงเป็นค่าเฉลี่ยจากการวัด${selectedOrange.name}คุณภาพดีเกรด A+ ที่มีขนาดมาตรฐาน',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppTheme.textTertiary,
-                            height: 1.6,
-                          ),
+                          'เธเนเธญเธกเธนเธฅเน€เธเนเธเธเนเธฒเน€เธเธฅเธตเนเธขเธเธฒเธเธเธฒเธฃเธงเธฑเธ”${selectedOrange.name}เธเธธเธ“เธ เธฒเธเน€เธเธฃเธ” ${selectedOrange.grade ?? "A+"} เธกเธฒเธ•เธฃเธเธฒเธ',
+                          style: const TextStyle(fontSize: 13, color: Color(0xFF9C8B7A), height: 1.5),
                         ),
                       ),
                     ],
                   ),
                 ),
-                ],
-              ],
-            ),
-          ),
+              ),
+            ],
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _circleButton(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40, height: 40,
+        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.25), shape: BoxShape.circle),
+        child: Icon(icon, color: Colors.white, size: 22),
       ),
     );
   }

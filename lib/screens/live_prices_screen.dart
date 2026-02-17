@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../utils/app_theme.dart';
 import '../widgets/common_widgets.dart';
@@ -47,7 +47,7 @@ class _LivePricesScreenState extends State<LivePricesScreen> {
           children: [
             // Header
             CommonWidgets.buildHeader(
-              title: 'ราคาล่าสุด',
+              title: 'Live Prices',
               onBack: () => widget.onNavigate('home'),
               trailing: Container(
                 width: 40,
@@ -69,7 +69,7 @@ class _LivePricesScreenState extends State<LivePricesScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 28),
               child: CommonWidgets.buildStatusBadge(
-                text: isApiConnected ? 'เชื่อมต่อ API สำเร็จ' : 'ใช้ข้อมูลแบบ Offline',
+                text: isApiConnected ? 'API Connected' : 'Offline Mode',
                 color: isApiConnected ? AppTheme.accentColor : AppTheme.warningColor,
                 icon: isApiConnected ? Icons.cloud_done_rounded : Icons.cloud_off_rounded,
               ),
@@ -79,7 +79,7 @@ class _LivePricesScreenState extends State<LivePricesScreen> {
             // Price List
             Expanded(
               child: isLoading
-                  ? CommonWidgets.buildLoadingIndicator(text: 'กำลังโหลดราคา...')
+                  ? CommonWidgets.buildLoadingIndicator(text: 'Loading prices...')
                   : prices.isEmpty
                       ? _buildEmptyState()
                       : RefreshIndicator(
@@ -119,7 +119,7 @@ class _LivePricesScreenState extends State<LivePricesScreen> {
             ),
             const SizedBox(height: 24),
             const Text(
-              'ไม่สามารถโหลดข้อมูลได้',
+              'Unable to load data',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -128,7 +128,7 @@ class _LivePricesScreenState extends State<LivePricesScreen> {
             ),
             const SizedBox(height: 10),
             const Text(
-              'กรุณาตรวจสอบการเชื่อมต่อ API\nและให้แน่ใจว่า Backend ทำงานอยู่',
+              'Check your API connection\nand make sure Backend is running.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16, color: AppTheme.textTertiary, height: 1.6),
             ),
@@ -136,7 +136,7 @@ class _LivePricesScreenState extends State<LivePricesScreen> {
             ElevatedButton.icon(
               onPressed: _loadPrices,
               icon: const Icon(Icons.refresh_rounded, size: 20),
-              label: const Text('ลองอีกครั้ง'),
+              label: const Text('Try Again'),
               style: AppTheme.primaryButton,
             ),
           ],
@@ -194,13 +194,13 @@ class _LivePricesScreenState extends State<LivePricesScreen> {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    'อัพเดท: ${price['updated_at'] ?? '${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')} น.'}',
+                    'Updated: ${price['updated_at'] ?? '${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}'}',
                     style: const TextStyle(fontSize: 14, color: AppTheme.textTertiary),
                   ),
                   if (price['source'] != null) ...[
                     const SizedBox(height: 3),
                     Text(
-                      'ที่มา: ${price['source']}',
+                      'Source: ${price['source']}',
                       style: const TextStyle(fontSize: 13, color: AppTheme.textTertiary, fontStyle: FontStyle.italic),
                     ),
                   ],
