@@ -9,29 +9,26 @@ class CommonWidgets {
     Widget? trailing,
   }) {
     return Padding(
-      padding: const EdgeInsets.all(AppTheme.spacingXL),
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
               color: AppTheme.cardBackground,
               shape: BoxShape.circle,
-              boxShadow: AppTheme.shadowSM,
+              boxShadow: AppTheme.shadowSoft,
             ),
             child: IconButton(
-              icon: const Icon(Icons.arrow_back, size: 20),
+              icon: const Icon(Icons.arrow_back_rounded, size: 22, color: AppTheme.textPrimary),
               padding: EdgeInsets.zero,
               onPressed: onBack,
             ),
           ),
-          const SizedBox(width: AppTheme.spacingM),
+          const SizedBox(width: 14),
           Expanded(
-            child: Text(
-              title,
-              style: AppTheme.heading2,
-            ),
+            child: Text(title, style: AppTheme.heading2),
           ),
           if (trailing != null) trailing,
         ],
@@ -39,46 +36,31 @@ class CommonWidgets {
     );
   }
 
-  // Card with gradient
+  // Card with warm shadow
+  static Widget buildCard({
+    required Widget child,
+    EdgeInsets? padding,
+    double? borderRadius,
+  }) {
+    return Container(
+      padding: padding ?? const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.cardBackground,
+        borderRadius: BorderRadius.circular(borderRadius ?? AppTheme.radiusM),
+        boxShadow: AppTheme.shadowSoft,
+      ),
+      child: child,
+    );
+  }
+
+  // For backward compatibility
   static Widget buildGradientCard({
     required Widget child,
     LinearGradient? gradient,
     EdgeInsets? padding,
     double? borderRadius,
   }) {
-    return Container(
-      padding: padding ?? const EdgeInsets.all(AppTheme.spacingL),
-      decoration: BoxDecoration(
-        gradient: gradient ?? AppTheme.cardGradient,
-        borderRadius: BorderRadius.circular(borderRadius ?? AppTheme.radiusM),
-        border: Border.all(color: Colors.orange.shade200),
-        boxShadow: AppTheme.shadowMD,
-      ),
-      child: child,
-    );
-  }
-
-  // Icon circle with gradient
-  static Widget buildIconCircle({
-    required IconData icon,
-    LinearGradient? gradient,
-    double size = 48,
-    double iconSize = 24,
-    Color iconColor = Colors.white,
-  }) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        gradient: gradient ?? AppTheme.orangeGradient,
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        icon,
-        size: iconSize,
-        color: iconColor,
-      ),
-    );
+    return buildCard(child: child, padding: padding, borderRadius: borderRadius);
   }
 
   // Loading indicator
@@ -87,9 +69,23 @@ class CommonWidgets {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(),
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryLight,
+              shape: BoxShape.circle,
+            ),
+            child: const Padding(
+              padding: EdgeInsets.all(14),
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+          ),
           if (text != null) ...[
-            const SizedBox(height: AppTheme.spacingL),
+            const SizedBox(height: 20),
             Text(text, style: AppTheme.bodyMedium),
           ],
         ],
@@ -108,15 +104,19 @@ class CommonWidgets {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            size: 64,
-            color: AppTheme.textDisabled,
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceColor,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 40, color: AppTheme.textTertiary),
           ),
-          const SizedBox(height: AppTheme.spacingL),
-          Text(title, style: AppTheme.bodyLarge),
+          const SizedBox(height: 20),
+          Text(title, style: AppTheme.heading3.copyWith(fontSize: 19)),
           if (subtitle != null) ...[
-            const SizedBox(height: AppTheme.spacingS),
+            const SizedBox(height: 10),
             Text(
               subtitle,
               style: AppTheme.bodyMedium,
@@ -124,11 +124,12 @@ class CommonWidgets {
             ),
           ],
           if (onRetry != null) ...[
-            const SizedBox(height: AppTheme.spacingL),
-            TextButton.icon(
+            const SizedBox(height: 28),
+            ElevatedButton.icon(
               onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
+              icon: const Icon(Icons.refresh_rounded, size: 20),
               label: const Text('ลองอีกครั้ง'),
+              style: AppTheme.primaryButton,
             ),
           ],
         ],
@@ -143,25 +144,22 @@ class CommonWidgets {
     required IconData icon,
   }) {
     return Container(
-      padding: const EdgeInsets.all(AppTheme.spacingM),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppTheme.radiusS),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(width: AppTheme.spacingS),
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 10),
           Text(
             text,
             style: TextStyle(
               color: color,
               fontWeight: FontWeight.w600,
-              fontSize: AppTheme.fontSizeM,
+              fontSize: 14,
             ),
           ),
         ],
@@ -177,18 +175,11 @@ class CommonWidgets {
     Color? backgroundColor,
   }) {
     return Container(
-      padding: const EdgeInsets.all(AppTheme.spacingXL),
+      padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            (backgroundColor ?? AppTheme.accentColor).withValues(alpha: 0.9),
-            backgroundColor ?? AppTheme.accentColor,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(AppTheme.radiusM),
-        boxShadow: AppTheme.shadowColored(backgroundColor ?? AppTheme.accentColor),
+        color: AppTheme.primaryLight,
+        borderRadius: BorderRadius.circular(AppTheme.radiusL),
+        boxShadow: AppTheme.shadowSoft,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -196,40 +187,31 @@ class CommonWidgets {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: AppTheme.bodyMedium.copyWith(
-                  color: Colors.white.withValues(alpha: 0.9),
-                ),
-              ),
-              const SizedBox(height: AppTheme.spacingXS),
+              Text(label, style: AppTheme.bodySmall),
+              const SizedBox(height: 6),
               Text(
                 price,
                 style: const TextStyle(
-                  fontSize: AppTheme.fontSize4XL,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  fontSize: 32,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.primaryColor,
                 ),
               ),
-              Text(
-                unit,
-                style: AppTheme.bodySmall.copyWith(
-                  color: Colors.white.withValues(alpha: 0.8),
-                ),
-              ),
+              const SizedBox(height: 2),
+              Text(unit, style: AppTheme.bodySmall),
             ],
           ),
           Container(
-            width: 56,
-            height: 56,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(AppTheme.radiusM),
+              color: AppTheme.primaryColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(AppTheme.radiusS),
             ),
             child: const Icon(
-              Icons.attach_money,
-              color: Colors.white,
-              size: 32,
+              Icons.monetization_on_outlined,
+              color: AppTheme.primaryColor,
+              size: 28,
             ),
           ),
         ],

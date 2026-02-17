@@ -16,20 +16,26 @@ class ApiService {
   }
   
   // ดึงข้อมูลส้มทั้งหมดจาก API
-  Future<List<OrangeType>> fetchOranges() async {
+  Future<({List<OrangeType> oranges, bool isFromApi})> fetchOranges() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/api/oranges'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/oranges'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 5));
       
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
-        return data.map((json) => OrangeType.fromJson(json)).toList();
+        final oranges = data.map((json) => OrangeType.fromJson(json)).toList();
+        debugPrint('✅ Successfully fetched ${oranges.length} oranges from API');
+        return (oranges: oranges, isFromApi: true);
       } else {
-        throw Exception('Failed to load oranges');
+        debugPrint('⚠️ API returned status ${response.statusCode}');
+        return (oranges: orangeTypes, isFromApi: false);
       }
     } catch (e) {
-      debugPrint('Error fetching oranges: $e');
+      debugPrint('❌ Error fetching oranges: $e');
       // Return local data as fallback
-      return orangeTypes;
+      return (oranges: orangeTypes, isFromApi: false);
     }
   }
   
@@ -51,28 +57,24 @@ class ApiService {
   }
   
   // คำนวณราคาผ่าน API
-  Future<Map<String, dynamic>?> calculatePrice(String orangeId, double weight) async {
+  Future<({Map<String, dynamic>? result, bool isFromApi})> calculatePrice(String orangeId, double weight) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/api/calculate?orange_id=$orangeId&weight=$weight'),
-      );
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 5));
       
       if (response.statusCode == 200) {
-        return json.decode(utf8.decode(response.bodyBytes));
+        final calculationResult = json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+        debugPrint('✅ Calculated via API: ${calculationResult['total_price']} บาท');
+        return (result: calculationResult, isFromApi: true);
       } else {
-        return null;
+        debugPrint('⚠️ API calculation failed with status ${response.statusCode}');
+        return (result: null, isFromApi: false);
       }
     } catch (e) {
-      debugPrint('Error calculating price: $e');
-      // Calculate locally as fallback
-      final orange = orangeTypes.firstWhere((o) => o.id == orangeId);
-      return {
-        'orange_id': orangeId,
-        'orange_name': orange.name,
-        'weight': weight,
-        'price_per_kg': orange.pricePerKg,
-        'total_price': weight * orange.pricePerKg,
-      };
+      debugPrint('❌ Error calculating price: $e');
+      return (result: null, isFromApi: false);
     }
   }
   

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/orange_type.dart';
 import '../services/api_service.dart';
+import '../utils/app_theme.dart';
 
 class DataScreen extends StatefulWidget {
   final Function(String) onNavigate;
@@ -25,178 +26,162 @@ class _DataScreenState extends State<DataScreen> {
   }
 
   Future<void> _loadOranges() async {
+    if (!mounted) return;
     setState(() => isLoading = true);
-    final oranges = await _apiService.fetchOranges();
-    setState(() {
-      availableOranges = oranges;
-      if (oranges.isNotEmpty) {
-        selectedOrange = oranges[0];
-      }
-      isLoading = false;
-    });
+    
+    try {
+      final result = await _apiService.fetchOranges();
+      if (!mounted) return;
+      setState(() {
+        availableOranges = result.oranges;
+        if (result.oranges.isNotEmpty) {
+          selectedOrange = result.oranges[0];
+        }
+        isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final measurements = [
       {
-        'icon': Icons.straighten,
+        'icon': Icons.straighten_rounded,
         'label': 'ความสูง',
         'value': selectedOrange.height,
         'unit': 'ซม.',
-        'colors': [Colors.blue.shade500, Colors.blue.shade600],
+        'color': AppTheme.primaryColor,
       },
       {
         'icon': Icons.circle_outlined,
         'label': 'รัศมี',
         'value': selectedOrange.radius,
         'unit': 'ซม.',
-        'colors': [Colors.purple.shade500, Colors.purple.shade600],
+        'color': const Color(0xFF9B7DB8),
       },
       {
-        'icon': Icons.open_in_full,
+        'icon': Icons.open_in_full_rounded,
         'label': 'เส้นผ่านศูนย์กลาง',
         'value': selectedOrange.diameter,
         'unit': 'ซม.',
-        'colors': [Colors.pink.shade500, Colors.pink.shade600],
+        'color': const Color(0xFF5B8FB9),
       },
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 20.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header with Back Button
+                // Header
                 Row(
                   children: [
                     Container(
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.cardBackground,
                         shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        boxShadow: AppTheme.shadowSoft,
                       ),
                       child: IconButton(
-                        icon: const Icon(Icons.arrow_back, size: 22),
+                        icon: const Icon(Icons.arrow_back_rounded, size: 22, color: AppTheme.textPrimary),
                         padding: EdgeInsets.zero,
                         onPressed: () => widget.onNavigate('home'),
                       ),
                     ),
                     const SizedBox(width: 16),
                     const Expanded(
-                      child: Text(
-                        'ข้อมูลที่จัดเก็บ',
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
-                          letterSpacing: -0.5,
-                        ),
-                      ),
+                      child: Text('ข้อมูลที่จัดเก็บ', style: AppTheme.heading2),
                     ),
                   ],
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 32),
                 
-                // Loading indicator
                 if (isLoading)
-                  const Center(
+                  Center(
                     child: Padding(
-                      padding: EdgeInsets.all(24.0),
-                      child: CircularProgressIndicator(),
+                      padding: const EdgeInsets.all(32.0),
+                      child: Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryLight,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: CircularProgressIndicator(strokeWidth: 2.5, color: AppTheme.primaryColor),
+                        ),
+                      ),
                     ),
                   ),
                 if (!isLoading) ...[
-                // Orange Type Selector
-                const Text(
-                  'เลือกชนิดผลส้ม',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A),
-                    letterSpacing: -0.3,
-                  ),
-                ),
+                // Orange Selector
+                const Text('เลือกชนิดผลส้ม', style: AppTheme.label),
                 const SizedBox(height: 16),
                 Row(
                   children: availableOranges.map((orange) {
                     final isSelected = selectedOrange.id == orange.id;
                     return Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 5),
                         child: InkWell(
                           onTap: () {
                             setState(() {
                               selectedOrange = orange;
                             });
                           },
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusM),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 10),
                             decoration: BoxDecoration(
-                              color: isSelected ? Colors.orange.shade50 : Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: isSelected ? Colors.orange.shade400 : const Color(0xFFE2E8F0),
-                                width: isSelected ? 2.5 : 1.5,
-                              ),
-                              boxShadow: isSelected
-                                  ? [
-                                      BoxShadow(
-                                        color: Colors.orange.withValues(alpha: 0.25),
-                                        blurRadius: 16,
-                                        offset: const Offset(0, 6),
-                                      ),
-                                    ]
-                                  : [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.04),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
+                              color: isSelected ? AppTheme.primaryLight : AppTheme.cardBackground,
+                              borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                              border: isSelected ? Border.all(
+                                color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                                width: 1.5,
+                              ) : null,
+                              boxShadow: AppTheme.shadowSoft,
                             ),
                             child: Column(
                               children: [
-                                Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: orange.colors,
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: orange.colors[0].withValues(alpha: 0.3),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Image.asset(
+                                    'assets/${orange.id}.png',
+                                    width: 44,
+                                    height: 44,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        width: 44,
+                                        height: 44,
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.surfaceColor,
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                      );
+                                    },
                                   ),
                                 ),
-                                const SizedBox(height: 10),
+                                const SizedBox(height: 12),
                                 Text(
                                   orange.name,
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                    color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                                    fontSize: 14,
+                                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                    color: isSelected ? AppTheme.textPrimary : AppTheme.textTertiary,
                                     height: 1.3,
                                   ),
                                 ),
@@ -208,43 +193,30 @@ class _DataScreenState extends State<DataScreen> {
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 32),
                 
-                // Orange Image Placeholder
+                // Orange Image
                 Center(
                   child: Container(
                     width: 180,
                     height: 180,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.orange.shade100,
-                          Colors.orange.shade200.withValues(alpha: 0.6),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(32),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.orange.withValues(alpha: 0.2),
-                          blurRadius: 24,
-                          offset: const Offset(0, 12),
-                        ),
-                      ],
+                      color: AppTheme.primaryLight,
+                      borderRadius: BorderRadius.circular(AppTheme.radiusXL),
+                      boxShadow: AppTheme.shadowMedium,
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(32),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusXL),
                       child: Image.asset(
                         'assets/${selectedOrange.id}.png',
-                        width: 160,
-                        height: 160,
+                        width: 180,
+                        height: 180,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           return Icon(
                             Icons.circle,
-                            size: 100,
-                            color: selectedOrange.colors[0],
+                            size: 80,
+                            color: AppTheme.primaryColor.withValues(alpha: 0.3),
                           );
                         },
                       ),
@@ -253,147 +225,90 @@ class _DataScreenState extends State<DataScreen> {
                 ),
                 const SizedBox(height: 20),
                 
-                // Selected Orange Info
+                // Name & Grade
                 Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.orange.shade50, Colors.amber.shade50],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                  child: Column(
+                    children: [
+                      Text(
+                        selectedOrange.name,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textPrimary,
+                        ),
                       ),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.orange.shade200, width: 1.5),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.orange.withValues(alpha: 0.1),
-                          blurRadius: 16,
-                          offset: const Offset(0, 4),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.accentLight,
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          selectedOrange.name,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
+                        child: const Text(
                           'คุณภาพ A+',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: Colors.orange.shade700,
+                            color: AppTheme.accentColor,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 36),
                 
-                // Measurements Section
-                const Text(
-                  'ขนาดและมิติ',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A),
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 18),
+                // Measurements
+                const Text('ขนาดและมิติ', style: AppTheme.label),
+                const SizedBox(height: 16),
                 
                 ...measurements.map((item) {
+                  final color = item['color'] as Color;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 14),
                     child: Container(
-                      padding: const EdgeInsets.all(18),
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFE8EDF2), width: 1.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
-                            blurRadius: 16,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        color: AppTheme.cardBackground,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                        boxShadow: AppTheme.shadowSoft,
                       ),
                       child: Row(
                         children: [
                           Container(
-                            width: 64,
-                            height: 64,
+                            width: 50,
+                            height: 50,
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: item['colors'] as List<Color>,
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: (item['colors'] as List<Color>)[0].withValues(alpha: 0.35),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
+                              color: color.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(AppTheme.radiusS),
                             ),
-                            child: Icon(
-                              item['icon'] as IconData,
-                              color: Colors.white,
-                              size: 30,
-                            ),
+                            child: Icon(item['icon'] as IconData, color: color, size: 24),
                           ),
                           const SizedBox(width: 18),
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item['label'] as String,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xFF64748B),
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                                  textBaseline: TextBaseline.alphabetic,
-                                  children: [
-                                    Text(
-                                      '${item['value']}',
-                                      style: const TextStyle(
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF0F172A),
-                                        letterSpacing: -0.5,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      item['unit'] as String,
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                        color: Color(0xFF94A3B8),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                            child: Text(
+                              item['label'] as String,
+                              style: const TextStyle(fontSize: 16, color: AppTheme.textSecondary),
                             ),
+                          ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              Text(
+                                '${item['value']}',
+                                style: const TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                item['unit'] as String,
+                                style: const TextStyle(fontSize: 15, color: AppTheme.textTertiary),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -401,54 +316,31 @@ class _DataScreenState extends State<DataScreen> {
                   );
                 }),
                 
-                const SizedBox(height: 8),
-                // Additional Info
+                const SizedBox(height: 10),
+                // Note
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.orange.shade50, Colors.amber.shade50],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.orange.shade200),
+                    color: AppTheme.surfaceColor,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusM),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        margin: const EdgeInsets.only(top: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.shade500,
-                          shape: BoxShape.circle,
-                        ),
+                      Icon(
+                        Icons.info_outline_rounded,
+                        size: 20,
+                        color: AppTheme.primaryColor.withValues(alpha: 0.6),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 14),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'หมายเหตุ',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF0F172A),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'ข้อมูลที่แสดงเป็นค่าเฉลี่ยจากการวัด${selectedOrange.name}คุณภาพดีเกรด A+ ที่มีขนาดมาตรฐาน',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: Color(0xFF64748B),
-                                height: 1.5,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          'ข้อมูลที่แสดงเป็นค่าเฉลี่ยจากการวัด${selectedOrange.name}คุณภาพดีเกรด A+ ที่มีขนาดมาตรฐาน',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppTheme.textTertiary,
+                            height: 1.6,
+                          ),
                         ),
                       ),
                     ],

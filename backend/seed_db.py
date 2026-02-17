@@ -18,8 +18,16 @@ def seed_data():
         # Check if data already exists
         existing = db.query(OrangeType).first()
         if existing:
-            print("⚠️  Database already has data. Skipping seed.")
-            return
+            print("⚠️  Database already has data.")
+            print(f"   Found: {existing.name} @ {existing.price_per_kg} บาท/กก.")
+            user_input = input("   Do you want to re-seed? (y/n): ")
+            if user_input.lower() != 'y':
+                return
+            # Delete existing data
+            db.query(OrangeMeasurement).delete()
+            db.query(OrangeType).delete()
+            db.commit()
+            print("   ✅ Deleted existing data")
         
         # Seed orange types
         orange_types_data = [

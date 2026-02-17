@@ -1,0 +1,35 @@
+{
+    "firestore":  {
+                      "rules":  "firestore.rules"
+                  },
+    "flutter":  {
+                    "platforms":  {
+                                      "dart":  {
+                                                   "lib/firebase_options.dart":  {
+                                                                                     "projectId":  "orangepriceapp",
+                                                                                     "configurations":  {
+                                                                                                            "web":  "1:166889945227:web:cea2fd1a1a2077ef74bc8e",
+                                                                                                            "ios":  "1:166889945227:ios:af841a878e8b16bd74bc8e",
+                                                                                                            "macos":  "1:166889945227:ios:af841a878e8b16bd74bc8e",
+                                                                                                            "android":  "1:166889945227:android:9e6726b817345ef574bc8e",
+                                                                                                            "windows":  "1:166889945227:web:cea2fd1a1a2077ef74bc8e"
+                                                                                                        }
+                                                                                 }
+                                               },
+                                      "android":  {
+                                                      "default":  {
+                                                                      "appId":  "1:166889945227:android:9e6726b817345ef574bc8e",
+                                                                      "fileOutput":  "android/app/google-services.json",
+                                                                      "projectId":  "orangepriceapp"
+                                                                  },
+                                                      "buildConfigurations":  {
+                                                                                  ".":  {
+                                                                                            "appId":  "1:166889945227:android:9e6726b817345ef574bc8e",
+                                                                                            "fileOutput":  "android/app/google-services.json",
+                                                                                            "projectId":  "orangepriceapp"
+                                                                                        }
+                                                                              }
+                                                  }
+                                  }
+                }
+}

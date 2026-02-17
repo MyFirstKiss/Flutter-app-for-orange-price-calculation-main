@@ -1,20 +1,20 @@
-# วิธีการติดตั้งและรันโปรเจกต์ Flutter
+# วิธีการติดตั้งและรันโปรเจกต์ Flutter (Android & iOS)
 
 ## 1. ติดตั้ง Flutter SDK
 
 หากยังไม่มี Flutter ให้ติดตั้งก่อน:
 
-### Windows
-```powershell
+### สำหรับ Windows/macOS/Linux
+```bash
 # ดาวน์โหลด Flutter SDK จาก
-https://docs.flutter.dev/get-started/install/windows
+https://docs.flutter.dev/get-started/install
 
 # หรือใช้ Git
 git clone https://github.com/flutter/flutter.git -b stable
 ```
 
 ### เพิ่ม Flutter ใน PATH
-เพิ่ม path ของ Flutter bin folder ใน Environment Variables
+เพิ่ม path ของ Flutter bin folder ให้กับระบบของคุณ
 
 ## 2. ตรวจสอบการติดตั้ง
 
@@ -34,24 +34,15 @@ flutter pub get
 
 ## 4. รันโปรเจกต์
 
-### รันบน Chrome (Web)
-```bash
-flutter run -d chrome
-```
-
 ### รันบน Android Emulator
 ```bash
 # เปิด Android Emulator ก่อน แล้วรัน
 flutter run -d android
 ```
 
-### รันบน Windows Desktop
-```bash
-flutter run -d windows
-```
-
 ### รันบน iOS Simulator (macOS only)
 ```bash
+# เปิด iOS Simulator ก่อน แล้วรัน
 flutter run -d ios
 ```
 
@@ -63,17 +54,17 @@ flutter build apk --release
 ```
 ไฟล์จะอยู่ที่: `build/app/outputs/flutter-apk/app-release.apk`
 
-### สำหรับ Windows
+### สำหรับ Android (App Bundle)
 ```bash
-flutter build windows --release
+flutter build appbundle --release
 ```
-ไฟล์จะอยู่ที่: `build/windows/runner/Release/`
+ไฟล์จะอยู่ที่: `build/app/outputs/bundle/release/app-release.aab`
 
-### สำหรับ Web
+### สำหรับ iOS (macOS only)
 ```bash
-flutter build web --release
+flutter build ios --release
 ```
-ไฟล์จะอยู่ที่: `build/web/`
+ไฟล์จะอยู่ที่ Xcode project สามารถ upload ผ่าน Xcode หรือ Transporter
 
 ## 6. การ Debug
 

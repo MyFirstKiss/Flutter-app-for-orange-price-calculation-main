@@ -1,181 +1,256 @@
-# 🍊 Orange Calculator App (Flutter)
+# Orange Calculator Application
 
-แอปพลิเคชัน Flutter สำหรับจัดการข้อมูลและคำนวณราคาผลส้ม พร้อมระบบ Backend ที่ดึงราคาจากตลาดไทแบบ Real-time
+## 📚 Additional Documentation
+- 📘 [Installation Guide](INSTALLATION.md)
+- ⚙️ [Backend Documentation](backend/README.md)
+- 📝 [Changelog](CHANGELOG.md)
 
-## ✨ ฟีเจอร์หลัก
+**Flutter + FastAPI** | **Platform Status**
 
-- 📊 **ข้อมูลที่จัดเก็บ** - แสดงข้อมูลมิติและขนาดของส้ม 3 ชนิด
-- 🧮 **คำนวณราคา** - คำนวณราคาตามน้ำหนัก (กิโลกรัม)
-- 💰 **ราคาล่าสุด** - ดึงราคาแบบ Real-time จาก Talaadthai.com
-- 🌐 **Web Scraping** - ดึงข้อมูลราคาจริงจากเว็บตลาดไท
-- 📱 **Cross-platform** - รองรับ Web, Android, iOS
+A mobile application developed using Flutter for orange price calculation and real-time market data tracking.
 
-## 🍊 ชนิดผลส้มที่รองรับ
+---
 
-1. **ส้มสายน้ำผึ้ง** - รสชาติหวานฉ่ำ เนื้อนุ่ม น้ำมาก
-2. **ส้มเขียวหวาน** - หวานกรอบ สดชื่น ไม่เปรี้ยว
-3. **ส้มแมนดาริน** - ��วานหอม ปอกง่าย เนื้อละเอียด
+## � Summary
 
-## 🛠️ เทคโนโลยีที่ใช้
+This project is a **cross-platform mobile application** that combines Flutter frontend with FastAPI backend to provide orange price information and calculation services. The system scrapes real-time market data from Talaadthai.com, stores it in SQLite database, and presents it through an intuitive mobile interface.
 
-### Frontend (Flutter)
-- **Flutter** 3.0+ - UI Framework
-- **Dart** - Programming Language
-- **Material Design 3** - UI/UX Design System
-- **HTTP Package** - API Communication
+**Key Highlights:**
+- 🍊 3 orange types supported (Tangerine, Green Sweet, Mandarin)
+- 💰 Real-time price scraping from Talaadthai.com
+- 🧮 Weight-based price calculator
+- 📱 Native Android & iOS apps
+- 🔄 1-hour data caching with fallback mechanism
+- 🎨 Material Design 3 UI
 
-### Backend (Python)
-- **FastAPI** 0.115.0 - Web Framework
-- **BeautifulSoup4** 4.12.3 - Web Scraping
-- **Uvicorn** 0.32.0 - ASGI Server
-- **Requests** 2.32.3 - HTTP Library
-- **Pydantic** 2.9.2 - Data Validation
+**Technologies:** Flutter (Dart), FastAPI (Python), BeautifulSoup4, SQLite, Material Design 3
 
-## 📦 การติดตั้ง
+---
 
-### ความต้องการของระบบ
+## �📑 Table of Contents
+- [Project Overview](#-project-overview)
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [System Architecture](#-system-architecture)
+- [Project Structure](#-project-structure)
+- [Installation & Setup](#️-installation--setup)
+- [Database Design](#-database-design)
+- [Application Workflow](#-application-workflow)
+- [Data Source & Caching](#-data-source--caching)
+- [API Endpoints](#-api-endpoints)
+- [Future Improvements](#-future-improvements)
+- [Version](#-version)
 
-- **Flutter SDK** 3.0.0 หรือสูงกว่า
-- **Python** 3.11+
-- **Git**
+---
 
-### 1. Clone Repository
+## 📌 Project Overview
 
-```bash
-git clone https://github.com/YOUR_USERNAME/orange-calculator-app-flutter.git
-cd orange-calculator-app-flutter
+The Orange Calculator Application helps users browse orange information, calculate prices by weight, and check the latest market prices.  
+It integrates FastAPI backend with web scraping capabilities to fetch real-time data from Talaadthai.com.
+
+### Main Objectives
+- Present orange data (dimensions, sizes, prices) in a clear, organized way
+- Provide quick price calculation based on weight (kilograms)
+- Show real-time market prices from Talaadthai.com
+- Demonstrate Flutter + FastAPI integration
+- Support mobile platforms (Android & iOS)
+
+### Supported Orange Types
+1. **Tangerine (ส้มสายน้ำผึ้ง)** - Sweet and juicy, soft texture, high water content
+2. **Green Sweet Orange (ส้มเขียวหวาน)** - Sweet and crispy, refreshing, not sour
+3. **Mandarin (ส้มแมนดาริน)** - Sweet aroma, easy to peel, fine texture
+
+---
+
+## 🚀 Features
+
+- 📊 **Data Display** - View dimensions and sizes of 3 orange types
+- 🧮 **Price Calculator** - Calculate price based on weight (kg)
+- 💰 **Live Prices** - Real-time price updates from Talaadthai.com
+- 🌐 **Web Scraping** - Automated data fetching with fallback mechanism
+- 📱 **Mobile-First** - Android and iOS support
+- 🔄 **Auto-Refresh** - Price data cached for 1 hour
+- 📈 **Dashboard** - Overview statistics and quick actions
+
+---
+
+## 🛠 Tech Stack
+
+**Frontend (Flutter)**
+- Flutter 3.0+ (Dart)
+- Material Design 3
+- HTTP Package
+
+**Backend (Python)**
+- FastAPI 0.115.0
+- BeautifulSoup4 4.12.3 (Web Scraping)
+- Uvicorn 0.32.0 (ASGI Server)
+- Requests 2.32.3
+- Pydantic 2.9.2
+
+**Database**
+- SQLite (Backend storage)
+
+---
+
+## 🏗 System Architecture
+
+**Layered Architecture:**
+
+1. **UI Layer** - Flutter Screens (Home, Data, Calculator, Live Prices)
+2. **Service Layer** - API Service (HTTP communication)
+3. **Backend Layer** - FastAPI (REST API + Web Scraping)
+4. **Data Layer** - SQLite Database
+
+**Data Flow:**  
+User → Flutter UI → API Service → FastAPI → Talaadthai.com / SQLite → FastAPI → Flutter UI
+
+---
+
+## 📂 Project Structure
+
+```
+lib/
+├── main.dart
+├── models/
+│   ├── orange_type.dart
+│   └── price_calculation.dart
+├── screens/
+│   ├── home_screen.dart
+│   ├── data_screen.dart
+│   ├── calculator_screen.dart
+│   ├── history_screen.dart
+│   └── live_prices_screen.dart
+├── services/
+│   └── api_service.dart
+├── utils/
+│   └── app_theme.dart
+└── widgets/
+    └── common_widgets.dart
+
+backend/
+├── main.py
+├── database.py
+├── seed_db.py
+└── requirements.txt
 ```
 
-### 2. ติดตั้ง Flutter Dependencies
+---
+
+## ⚙️ Installation & Setup
 
 ```bash
+git clone https://github.com/MyFirstKiss/Flutter-app-for-orange-price-calculation-main.git
+cd Flutter-app-for-orange-price-calculation-main
 flutter pub get
+flutter run
 ```
 
-### 3. ติดตั้ง Python Dependencies และ Setup Database
+**Backend:**
+- Setup FastAPI backend
+- Install Python dependencies: `pip install -r requirements.txt`
+- Seed database: `python seed_db.py`
+- Run server: `python main.py`
 
-```bash
-cd backend
-pip install -r requirements.txt
+**Important:** For Android Emulator, app connects to backend at `10.0.2.2:8001`
 
-# สร้างและ seed database
-python seed_db.py
-```
+---
 
-**หมายเหตุ:** Backend จะสร้าง database อัตโนมัติเมื่อรันครั้งแรก แต่แนะนำให้รัน `seed_db.py` เพื่อเติมข้อมูลเริ่มต้น
+## 📊 Database Design
 
-## 🚀 การรันแอป
+**SQLite (Backend):**
 
-### 1. เริ่ม Backend Server (ต้องรันก่อน!)
+**oranges:**
+- id
+- name
+- price_per_kg
+- height
+- radius
+- diameter
 
-```bash
-cd backend
-python main.py
-```
+**calculations:**
+- id
+- orange_id
+- weight_kg
+- total_price
+- timestamp
 
-Backend จะทำงานที่: `http://localhost:8001`
+---
 
-### 2. เริ่ม Flutter App (รันในหน้าต่างใหม่)
+## 🔄 Application Workflow
 
-```bash
-# สำหรับ Android Emulator
-flutter run -d android
+1. Launch App
+2. Browse Orange Data
+3. Calculate Price
+4. View Live Prices
+5. Check History
 
-# สำหรับ Chrome
-flutter run -d chrome
+---
 
-# สำหรับ Windows Desktop
-flutter run -d windows
+## 🧾 Data Source & Caching
 
-# สำหรับ iOS
-flutter run -d ios
-```
+- Price data fetched from Talaadthai.com
+- Prices cached for 1 hour to reduce scraping load
+- Fallback data used if website unavailable
 
-**⚠️ สำคัญ:** สำหรับ Android Emulator, แอปจะเชื่อมต่อ backend ที่ `10.0.2.2:8001` (ซึ่งเป็น localhost ของ emulator)
+---
 
 ## 📡 API Endpoints
 
-Backend มี 5 endpoints หลัก:
+Backend provides these endpoints:
 
 - `GET /` - Health check
-- `GET /oranges` - ราคาส้มจาก Talaadthai (filtered)
-- `GET /api/oranges` - ข้อมูลส้มสำหรับ Flutter
-- `GET /api/oranges/{id}` - ข้อมูลส้มรายตัว
-- `POST /api/calculate` - คำนวณราคา
-- `GET /api/prices` - ราคา real-time
+- `GET /oranges` - Filtered prices from Talaadthai
+- `GET /api/oranges` - Orange data for the app
+- `GET /api/oranges/{id}` - Single orange data
+- `POST /api/calculate` - Price calculation
+- `GET /api/prices` - Real-time prices
 
-## 📁 โครงสร้างโปรเจกต์
+---
+
+## 🚀 Deployment Diagram
 
 ```
-orange-calculator-app-flutter/
-├── lib/
-│   ├── main.dart                 # Entry point
-│   ├── models/
-│   │   └── orange_type.dart      # Data model
-│   ├── screens/
-│   │   ├── home_screen.dart      # หน้าแรก
-│   │   ├── data_screen.dart      # หน้าข้อมูล
-│   │   ├── calculator_screen.dart # หน้าคำนวณ
-│   │   └── live_prices_screen.dart # หน้าราคาล่าสุด
-│   ├── services/
-│   │   └── api_service.dart      # HTTP service
-│   ├── utils/
-│   │   └── app_theme.dart        # Theme constants
-│   └── widgets/
-│       └── common_widgets.dart   # Reusable widgets
-├── backend/
-│   ├── main.py                   # FastAPI server
-│   ├── requirements.txt          # Python dependencies
-│   └── README.md                 # Backend docs
-├── pubspec.yaml                  # Flutter config
-└── README.md                     # Project docs
+[ Android / iOS Device ]
+         |
+         ▼
+[ Flutter Application ]
+         |
+         ▼
+[ FastAPI Backend ]
+    |          |
+    ▼          ▼
+[ SQLite ]  [ Talaadthai.com ]
+              (Web Scraping)
 ```
 
-## 🎨 UI/UX Features
+---
 
-- ✅ Material Design 3
-- ✅ Gradient backgrounds
-- ✅ Emoji icons (🍊)
-- ✅ Loading indicators
-- ✅ Empty states
-- ✅ Status badges
-- ✅ Responsive design
-- ✅ Consistent theming
+## 📈 Future Improvements
 
-## 🧪 การทดสอบ
+- Real-time price alerts
+- Price trend charts
+- Multi-language support
+- User authentication
+- Offline mode
 
-```bash
-# Analyze code
-flutter analyze
+---
 
-# Run tests
-flutter test
-```
+## 🏷 Version
+
+**1.0.0** (2026)
+
+---
+
+## 👨‍💻 Developer
+
+Student Project – Information Technology
+
+---
 
 ## 📄 License
 
-MIT License - สามารถใช้งานได้อย่างอิสระ
-
-## 👨‍💻 ผู้พัฒนา
-
-Converted from Next.js/React to Flutter with Backend Integration
-
-## 🤝 การมีส่วนร่วม
-
-Pull requests are welcome! สำหรับการเปลี่ยนแปลงใหญ่ กรุณาเปิด issue เพื่อหารือก่อน
-
-## 📝 หมายเหตุ
-
-- ข้อมูลราคาดึงจาก Talaadthai.com แบบ real-time
-- Cache ราคา 1 ชั่วโมงเพื่อลดการ scrape
-- มี fallback data กรณี API ไม่พร้อมใช้งาน
-- รองรับ CORS สำหรับการพัฒนาบน localhost
-
-## 🔗 Links
-
-- [Flutter Documentation](https://docs.flutter.dev)
-- [FastAPI Documentation](https://fastapi.tiangolo.com)
-- [Talaadthai.com](https://talaadthai.com)
+MIT License - Educational use only
 
 ---
 

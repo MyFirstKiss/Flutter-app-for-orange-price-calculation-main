@@ -10,95 +10,77 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(28.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(height: AppTheme.spacingXL),
+                const SizedBox(height: 32),
                 
+                // Title
                 const Text(
                   'ข้อมูลผลส้ม',
                   style: AppTheme.heading1,
                 ),
-                const SizedBox(height: AppTheme.spacingS),
+                const SizedBox(height: 10),
                 const Text(
                   'ระบบจัดการข้อมูลและคำนวณราคาผลส้ม',
                   textAlign: TextAlign.center,
                   style: AppTheme.bodyLarge,
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 36),
                 
-                // Orange Image with Emoji
+                // Orange Image
                 Container(
-                  width: 192,
-                  height: 192,
+                  width: 180,
+                  height: 180,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.orange.shade100,
-                        Colors.orange.shade50,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.orange.withValues(alpha: 0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
+                    color: AppTheme.primaryLight,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusXL),
+                    boxShadow: AppTheme.shadowMedium,
                   ),
                   child: Center(
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(24),
                       child: Image.asset(
                         'assets/oranges.png',
-                        width: 180,
-                        height: 180,
+                        width: 160,
+                        height: 160,
                         fit: BoxFit.cover,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 36),
                 
                 // Info Cards
                 Row(
                   children: [
                     Expanded(
                       child: Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Colors.orange.shade50, Colors.white],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.orange.shade200),
+                          color: AppTheme.cardBackground,
+                          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                          boxShadow: AppTheme.shadowSoft,
                         ),
                         child: Column(
                           children: [
                             Text(
                               '${orangeTypes.length}',
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.orange.shade600,
+                              style: const TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.primaryColor,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 6),
                             const Text(
-                              'ชนิด',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFF64748B),
-                              ),
+                              'ชนิดผลส้ม',
+                              style: TextStyle(fontSize: 15, color: AppTheme.textTertiary),
                             ),
                           ],
                         ),
@@ -107,33 +89,26 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(width: 16),
                     Expanded(
                       child: Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Colors.orange.shade50, Colors.white],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.orange.shade200),
+                          color: AppTheme.cardBackground,
+                          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                          boxShadow: AppTheme.shadowSoft,
                         ),
-                        child: Column(
+                        child: const Column(
                           children: [
                             Text(
                               'A+',
                               style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.orange.shade600,
+                                fontSize: 30,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.accentColor,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              'เกรด',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFF64748B),
-                              ),
+                            SizedBox(height: 6),
+                            Text(
+                              'เกรดคุณภาพ',
+                              style: TextStyle(fontSize: 15, color: AppTheme.textTertiary),
                             ),
                           ],
                         ),
@@ -141,44 +116,41 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 36),
                 
                 // Menu Buttons
                 _buildMenuButton(
-                  context: context,
+                  icon: Icons.bar_chart_rounded,
                   title: 'ข้อมูลที่จัดเก็บ',
                   subtitle: 'ดูขนาดและมิติของผลส้ม',
-                  emoji: '📊',
-                  colors: [Colors.orange.shade500, Colors.orange.shade600],
+                  color: AppTheme.primaryColor,
                   onTap: () => onNavigate('data'),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 _buildMenuButton(
-                  context: context,
+                  icon: Icons.calculate_rounded,
                   title: 'คำนวณราคา',
                   subtitle: 'กรอกน้ำหนักเพื่อคำนวณราคา',
-                  emoji: '🧮',
-                  colors: [Colors.green.shade500, Colors.green.shade600],
+                  color: AppTheme.accentColor,
                   onTap: () => onNavigate('calculator'),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 _buildMenuButton(
-                  context: context,
+                  icon: Icons.trending_up_rounded,
                   title: 'ราคาล่าสุด',
                   subtitle: 'ดูราคาแบบ Real-time จาก API',
-                  emoji: '💰',
-                  colors: [Colors.blue.shade500, Colors.blue.shade600],
+                  color: const Color(0xFF5B8FB9),
                   onTap: () => onNavigate('liveprices'),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 _buildMenuButton(
-                  context: context,
+                  icon: Icons.history_rounded,
                   title: 'ประวัติการคำนวณ',
                   subtitle: 'ดูประวัติและสถิติการคำนวณราคา',
-                  emoji: '📜',
-                  colors: [Colors.purple.shade500, Colors.purple.shade600],
+                  color: const Color(0xFF9B7DB8),
                   onTap: () => onNavigate('history'),
                 ),
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -188,52 +160,36 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildMenuButton({
-    required BuildContext context,
+    required IconData icon,
     required String title,
     required String subtitle,
-    required String emoji,
-    required List<Color> colors,
+    required Color color,
     required VoidCallback onTap,
   }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppTheme.radiusM),
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: colors,
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: colors[0].withValues(alpha: 0.3),
-                blurRadius: 15,
-                offset: const Offset(0, 5),
-              ),
-            ],
+            color: AppTheme.cardBackground,
+            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+            boxShadow: AppTheme.shadowSoft,
           ),
           child: Row(
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 50,
+                height: 50,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusS),
                 ),
-                child: Center(
-                  child: Text(
-                    emoji,
-                    style: const TextStyle(fontSize: 24),
-                  ),
-                ),
+                child: Icon(icon, size: 26, color: color),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 18),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,19 +199,21 @@ class HomeScreen extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: AppTheme.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.white.withValues(alpha: 0.9),
-                      ),
+                      style: const TextStyle(fontSize: 14, color: AppTheme.textTertiary),
                     ),
                   ],
                 ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: AppTheme.textTertiary.withValues(alpha: 0.5),
+                size: 24,
               ),
             ],
           ),

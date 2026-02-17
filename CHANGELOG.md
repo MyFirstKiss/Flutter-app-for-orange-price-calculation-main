@@ -1,36 +1,27 @@
-## 1.0.0 (2026-01-29)
+# Changelog
 
-### Features
+## 2026-02-19
 
-* **SDK Release**: Initial release of Orange Calculator SDK
-* **API**: Complete API wrapper for backend operations
-* **Models**: OrangeType, PriceCalculation, and PriceCalculationResult models
-* **Services**: ApiService with full REST API integration
-* **Widgets**: Pre-built common widgets for quick UI development
-* **Theme**: App theme utilities for consistent styling
-* **Real-time**: Live price updates from Talaadthai.com
-* **History**: Calculation history management with CRUD operations
-* **Statistics**: Usage statistics and analytics
-* **Cross-platform**: Support for iOS, Android, Web, Windows, macOS, Linux
+* `af7fcc7` chore: sync local workspace state
 
-### Documentation
+## 2026-01-29
 
-* Complete API reference in SDK_README.md
-* Usage examples for common scenarios
-* Flutter widget integration examples
-* Backend setup instructions
+* `a394fb8` chore: Update Flutter build cache files
+* `62143d0` docs: Fix backend README with correct setup instructions
+* `e18a982` fix: Resolve Flutter analyze errors
+* `7f63374` feat: Create Orange Calculator SDK v1.0.0
+* `57fe792` docs: Update setup instructions and gitignore for easier deployment
+* `e6e3465` Merge: Update with complete implementation including images and delete feature
+* `313fb1c` feat: Complete Orange Calculator App with image assets and swipe-to-delete
 
-### Backend Requirements
+## 2026-01-25
 
-* FastAPI backend server required
-* Python 3.11+ 
-* SQLite database
-* Port 8001 (configurable)
+* `e3f7f2e` chore: add all project files
 
-### Breaking Changes
+## 2026-01-23
 
-None (initial release)
+* `6d1a368` Add history screen with calculation tracking and statistics
 
-### Migration Guide
+## 2026-01-22
 
-This is the initial release. No migration needed.
+* `8c820dc` Initial commit: Orange Calculator App with Flutter and Python Backend

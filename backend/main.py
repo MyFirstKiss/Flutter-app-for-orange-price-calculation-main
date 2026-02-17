@@ -29,7 +29,7 @@ app = FastAPI(title="Orange Price Scraper API")
 async def startup_event():
     """Initialize database on application startup"""
     init_db()
-    print("🗄️  Database initialized")
+    print("[DB] Database initialized")
 
 # Enable CORS for all origins (mobile simulator access)
 app.add_middleware(
@@ -275,27 +275,8 @@ async def get_oranges_for_flutter(db: Session = Depends(get_db)):
             
             result.append(orange_data)
         
-        # Try to update prices from web scraping
-        try:
-            scraped_prices = await get_orange_prices()
-            price_map = {}
-            
-            for price in scraped_prices:
-                avg_price = (price.price_min + price.price_max) / 2
-                
-                if "สายน้ำผึ้ง" in price.name:
-                    price_map["tangerine"] = avg_price
-                elif "เขียวหวาน" in price.name:
-                    price_map["green-sweet"] = avg_price
-                elif "แมนดาริน" in price.name:
-                    price_map["mandarin"] = avg_price
-            
-            # Update prices in result
-            for orange_data in result:
-                if orange_data["id"] in price_map:
-                    orange_data["pricePerKg"] = round(price_map[orange_data["id"]], 2)
-        except:
-            pass  # Use database prices if scraping fails
+        # Note: Web scraping disabled for stability
+        # Use /api/update-prices endpoint to manually update prices from web
         
         return result
         
@@ -514,6 +495,70 @@ async def delete_calculation(calculation_id: int, db: Session = Depends(get_db))
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Delete error: {str(e)}")
+
+
+@app.post("/api/update-prices")
+async def update_prices_from_web(db: Session = Depends(get_db)):
+    """Scrape and update prices in database"""
+    try:
+        # Scrape prices from web
+        scraped_prices = await get_orange_prices()
+        
+        updated_count = 0
+        price_updates = []
+        
+        for price in scraped_prices:
+            avg_price = round((price.price_min + price.price_max) / 2, 2)
+            orange_id = None
+            
+            # Map scraped names to database IDs
+            if "สายน้ำผึ้ง" in price.name:
+                orange_id = "tangerine"
+            elif "เขียวหวาน" in price.name:
+                orange_id = "green-sweet"
+            elif "แมนดาริน" in price.name:
+                orange_id = "mandarin"
+            
+            if orange_id:
+                # Update in database
+                orange = db.query(DBOrangeType).filter(
+                    DBOrangeType.orange_id == orange_id
+                ).first()
+                
+                if orange:
+                    old_price = orange.price_per_kg
+                    orange.price_per_kg = avg_price
+                    updated_count += 1
+                    price_updates.append({
+                        "id": orange_id,
+                        "name": orange.name,
+                        "old_price": old_price,
+                        "new_price": avg_price
+                    })
+        
+        db.commit()
+        
+        return {
+            "success": True,
+            "updated_count": updated_count,
+            "updates": price_updates,
+            "scraped_data": [
+                {
+                    "name": p.name,
+                    "grade": p.grade,
+                    "price_min": p.price_min,
+                    "price_max": p.price_max,
+                    "avg": round((p.price_min + p.price_max) / 2, 2)
+                }
+                for p in scraped_prices
+            ]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Update error: {str(e)}")
 
 
 if __name__ == "__main__":

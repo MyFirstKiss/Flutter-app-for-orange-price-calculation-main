@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "166889945227",
+    "project_id": "orangepriceapp",
+    "storage_bucket": "orangepriceapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:166889945227:android:6bf09fd54f9f01e574bc8e",
+        "android_client_info": {
+          "package_name": "com.android.application"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6bclrdA3nZ4zGEtTxxtVKuIPY2m_OWNE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:166889945227:android:9e6726b817345ef574bc8e",
+        "android_client_info": {
+          "package_name": "com.example.orange_calculator_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6bclrdA3nZ4zGEtTxxtVKuIPY2m_OWNE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

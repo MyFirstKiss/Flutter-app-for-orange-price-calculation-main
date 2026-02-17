@@ -27,6 +27,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _loadData() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _error = null;
@@ -36,12 +37,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
       final calculations = await _apiService.fetchCalculations(limit: 100);
       final stats = await _apiService.fetchStatistics();
       
+      if (!mounted) return;
       setState(() {
         _calculations = calculations;
         _stats = stats;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = 'ไม่สามารถโหลดข้อมูลได้: $e';
         _isLoading = false;
@@ -50,49 +53,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _deleteCalculation(PriceCalculation calc) async {
-    // เก็บ index เดิมเพื่อกู้คืนตำแหน่งเดิม
     final int originalIndex = _calculations.indexOf(calc);
     
     if (!mounted) return;
-    
     setState(() {
       _calculations.remove(calc);
     });
 
-    // แสดง Snackbar พร้อมรายละเอียดข้อมูลที่ลบ
     final snackBar = SnackBar(
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'ลบประวัติสำเร็จ',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${calc.orangeName} • ${calc.weightKg.toStringAsFixed(2)} กก. • ฿${calc.totalPrice.toStringAsFixed(2)}',
-            style: const TextStyle(fontSize: 14),
-          ),
-          Text(
-            _formatDate(calc.date),
-            style: const TextStyle(fontSize: 12, color: Colors.white70),
-          ),
-        ],
-      ),
-      backgroundColor: Colors.red.shade600,
+      content: Text('ลบ ${calc.orangeName} สำเร็จ', style: const TextStyle(fontSize: 15)),
+      backgroundColor: AppTheme.textPrimary,
       duration: const Duration(seconds: 1),
       behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      margin: const EdgeInsets.all(20),
       action: SnackBarAction(
         label: 'เลิกทำ',
-        textColor: Colors.white,
+        textColor: AppTheme.primaryColor,
         onPressed: () {
           if (!mounted) return;
           setState(() {
-            // คืนค่ากลับไปที่ตำแหน่งเดิม
             _calculations.insert(originalIndex, calc);
           });
         },
@@ -102,25 +82,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
     
-    // หลังจาก 1 วินาที ถ้าไม่กด undo จะลบถาวรจาก database
     Future.delayed(const Duration(seconds: 1), () async {
-      // ตรวจสอบว่ายังถูกลบอยู่หรือไม่ (ไม่ได้กด undo)
       if (mounted && !_calculations.contains(calc)) {
-        debugPrint('🔄 กำลังลบจาก database: ${calc.orangeName} (ID: ${calc.id})');
-        
-        // เรียก API เพื่อลบจาก database ถาวร
         try {
-          final success = await _apiService.deleteCalculation(calc.id);
-          if (success) {
-            debugPrint('✅ ลบจาก database สำเร็จ: ${calc.orangeName} (ID: ${calc.id})');
-          } else {
-            debugPrint('❌ ลบจาก database ล้มเหลว: ${calc.orangeName} (ID: ${calc.id})');
-          }
+          await _apiService.deleteCalculation(calc.id);
         } catch (e) {
           debugPrint('❌ เกิดข้อผิดพลาดในการลบ: $e');
         }
-      } else {
-        debugPrint('⏭️ ข้ามการลบ (กด undo แล้ว): ${calc.orangeName}');
       }
     });
   }
@@ -140,160 +108,184 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
-  Color _getOrangeColor(String orangeType) {
-    switch (orangeType) {
-      case 'tangerine':
-        return Colors.orange;
-      case 'green-sweet':
-        return Colors.green;
-      case 'mandarin':
-        return Colors.amber;
-      default:
-        return Colors.orange;
-    }
-  }
-
-  IconData _getOrangeIcon(String orangeType) {
-    switch (orangeType) {
-      case 'tangerine':
-        return Icons.circle;
-      case 'green-sweet':
-        return Icons.circle;
-      case 'mandarin':
-        return Icons.circle;
-      default:
-        return Icons.circle;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => widget.onNavigate('home'),
-          tooltip: 'กลับหน้าหลัก',
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppTheme.cardBackground,
+                      shape: BoxShape.circle,
+                      boxShadow: AppTheme.shadowSoft,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back_rounded, size: 22, color: AppTheme.textPrimary),
+                      padding: EdgeInsets.zero,
+                      onPressed: () => widget.onNavigate('home'),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Text('ประวัติการคำนวณ', style: AppTheme.heading2),
+                  ),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppTheme.cardBackground,
+                      shape: BoxShape.circle,
+                      boxShadow: AppTheme.shadowSoft,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.refresh_rounded, size: 20, color: AppTheme.textSecondary),
+                      padding: EdgeInsets.zero,
+                      onPressed: _loadData,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Content
+            Expanded(
+              child: _isLoading
+                  ? Center(
+                      child: Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryLight,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: CircularProgressIndicator(strokeWidth: 2.5, color: AppTheme.primaryColor),
+                        ),
+                      ),
+                    )
+                  : _error != null
+                      ? _buildErrorState()
+                      : _buildContent(),
+            ),
+          ],
         ),
-        title: const Text(
-          'ประวัติการคำนวณ',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceColor,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.error_outline_rounded, size: 36, color: AppTheme.textTertiary),
           ),
-        ),
-        backgroundColor: AppTheme.primaryColor,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              _error!,
+              style: const TextStyle(color: AppTheme.textSecondary, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
             onPressed: _loadData,
-            tooltip: 'รีเฟรช',
+            style: AppTheme.primaryButton,
+            child: const Text('ลองอีกครั้ง'),
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
+    );
+  }
+
+  Widget _buildContent() {
+    return Column(
+      children: [
+        // Stats
+        if (_stats != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 28),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 28),
+              decoration: BoxDecoration(
+                color: AppTheme.cardBackground,
+                borderRadius: BorderRadius.circular(AppTheme.radiusL),
+                boxShadow: AppTheme.shadowSoft,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildStatItem(
+                    icon: Icons.calculate_rounded,
+                    label: 'ทั้งหมด',
+                    value: '${_stats!['total_calculations'] ?? 0}',
+                    color: AppTheme.primaryColor,
+                  ),
+                  Container(height: 44, width: 1, color: AppTheme.dividerColor),
+                  _buildStatItem(
+                    icon: Icons.star_rounded,
+                    label: 'ยอดนิยม',
+                    value: _stats!['most_popular_count']?.toString() ?? '0',
+                    color: AppTheme.warningColor,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        const SizedBox(height: 16),
+
+        // List
+        Expanded(
+          child: _calculations.isEmpty
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
-                      const SizedBox(height: 16),
-                      Text(
-                        _error!,
-                        style: TextStyle(color: Colors.red.shade700, fontSize: 16),
-                        textAlign: TextAlign.center,
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceColor,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.history_rounded, size: 40, color: AppTheme.textTertiary),
                       ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadData,
-                        child: const Text('ลองอีกครั้ง'),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'ยังไม่มีประวัติการคำนวณ',
+                        style: TextStyle(fontSize: 17, color: AppTheme.textTertiary),
                       ),
                     ],
                   ),
                 )
-              : Column(
-                  children: [
-                    // Statistics Card
-                    if (_stats != null)
-                      Container(
-                        margin: const EdgeInsets.all(16),
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                              blurRadius: 15,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildStatItem(
-                              icon: Icons.calculate,
-                              label: 'ทั้งหมด',
-                              value: '${_stats!['total_calculations'] ?? 0}',
-                            ),
-                            Container(
-                              height: 40,
-                              width: 1,
-                            color: Colors.white.withValues(alpha: 0.3),
-                            ),
-                            _buildStatItem(
-                              icon: Icons.star,
-                              label: 'ยอดนิยม',
-                              value: _stats!['most_popular_count']?.toString() ?? '0',
-                            ),
-                          ],
-                        ),
-                      ),
-
-                    // History List
-                    Expanded(
-                      child: _calculations.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.history,
-                                    size: 80,
-                                    color: Colors.grey.shade300,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'ยังไม่มีประวัติการคำนวณ',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          : ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              itemCount: _calculations.length,
-                              itemBuilder: (context, index) {
-                                final calc = _calculations[index];
-                                return _buildHistoryCard(calc);
-                              },
-                            ),
-                    ),
-                  ],
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
+                  itemCount: _calculations.length,
+                  itemBuilder: (context, index) {
+                    return _buildHistoryCard(_calculations[index]);
+                  },
                 ),
+        ),
+      ],
     );
   }
 
@@ -301,98 +293,77 @@ class _HistoryScreenState extends State<HistoryScreen> {
     required IconData icon,
     required String label,
     required String value,
+    required Color color,
   }) {
     return Column(
       children: [
-        Icon(icon, color: Colors.white, size: 32),
-        const SizedBox(height: 8),
+        Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(AppTheme.radiusS),
+          ),
+          child: Icon(icon, color: color, size: 24),
+        ),
+        const SizedBox(height: 12),
         Text(
           value,
           style: const TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+            color: AppTheme.textPrimary,
+            fontSize: 26,
+            fontWeight: FontWeight.w700,
           ),
         ),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.9),
-            fontSize: 14,
-          ),
-        ),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(color: AppTheme.textTertiary, fontSize: 15)),
       ],
     );
   }
 
   Widget _buildHistoryCard(PriceCalculation calc) {
-    final color = _getOrangeColor(calc.orangeType);
-    
     return Dismissible(
       key: Key(calc.id.toString()),
       direction: DismissDirection.endToStart,
       background: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: 14),
         decoration: BoxDecoration(
-          color: Colors.red.shade400,
-          borderRadius: BorderRadius.circular(16),
+          color: AppTheme.errorColor,
+          borderRadius: BorderRadius.circular(AppTheme.radiusM),
         ),
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 24),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Icon(Icons.delete_outline, color: Colors.white, size: 28),
-            SizedBox(width: 8),
-            Text(
-              'ลบ',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
+        padding: const EdgeInsets.only(right: 28),
+        child: const Icon(Icons.delete_outline_rounded, color: Colors.white, size: 26),
       ),
-      onDismissed: (direction) {
-        _deleteCalculation(calc);
-      },
       confirmDismiss: (direction) async {
         return await showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppTheme.radiusL),
               ),
-              title: const Row(
-                children: [
-                  Icon(Icons.delete_outline, color: Colors.red, size: 28),
-                  SizedBox(width: 12),
-                  Text('ยืนยันการลบ'),
-                ],
+              backgroundColor: AppTheme.cardBackground,
+              title: const Text(
+                'ยืนยันการลบ',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
               ),
               content: Text(
                 'คุณต้องการลบประวัติ "${calc.orangeName}" หรือไม่?',
-                style: const TextStyle(fontSize: 16),
+                style: const TextStyle(fontSize: 16, color: AppTheme.textSecondary),
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
-                  child: Text(
-                    'ยกเลิก',
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
-                  ),
+                  child: const Text('ยกเลิก', style: TextStyle(color: AppTheme.textTertiary, fontSize: 16)),
                 ),
                 ElevatedButton(
                   onPressed: () => Navigator.of(context).pop(true),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
+                    backgroundColor: AppTheme.errorColor,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusS)),
                   ),
                   child: const Text('ลบ', style: TextStyle(fontSize: 16)),
                 ),
@@ -401,57 +372,44 @@ class _HistoryScreenState extends State<HistoryScreen> {
           },
         );
       },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
+      onDismissed: (direction) {
+        _deleteCalculation(calc);
+      },
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 14),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: () {
-              _showDetailsDialog(calc);
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(16),
+            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+            onTap: () => _showDetailsDialog(calc),
+            child: Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: AppTheme.cardBackground,
+                borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                boxShadow: AppTheme.shadowSoft,
+              ),
               child: Row(
                 children: [
-                  // Icon
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [color.withValues(alpha: 0.7), color],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.asset(
-                        'assets/${calc.orangeType}.png',
-                        width: 56,
-                        height: 56,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Icon(
-                            _getOrangeIcon(calc.orangeType),
-                            color: Colors.white,
-                            size: 32,
-                          );
-                        },
-                      ),
+                  // Image
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                    child: Image.asset(
+                      'assets/${calc.orangeType}.png',
+                      width: 52,
+                      height: 52,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryLight,
+                            borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                          ),
+                          child: const Icon(Icons.circle, color: AppTheme.primaryColor, size: 26),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -464,26 +422,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         Text(
                           calc.orangeName,
                           style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 5),
                         Text(
-                          '${calc.weightKg.toStringAsFixed(2)} กก. × ${calc.pricePerKg.toStringAsFixed(0)} บาท/กก.',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade600,
-                          ),
+                          '${calc.weightKg.toStringAsFixed(2)} กก. × ${calc.pricePerKg.toStringAsFixed(0)} ฿/กก.',
+                          style: const TextStyle(fontSize: 14, color: AppTheme.textTertiary),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Text(
                           _formatDate(calc.date),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade500,
-                          ),
+                          style: const TextStyle(fontSize: 13, color: AppTheme.textTertiary),
                         ),
                       ],
                     ),
@@ -493,19 +445,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        '฿${calc.totalPrice.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: color,
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryLight,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '฿${calc.totalPrice.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.primaryColor,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Icon(
-                        Icons.chevron_right,
-                        color: Colors.grey.shade400,
-                      ),
+                      const SizedBox(height: 8),
+                      const Icon(Icons.chevron_right_rounded, color: AppTheme.textTertiary, size: 20),
                     ],
                   ),
                 ],
@@ -518,62 +474,31 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   void _showDetailsDialog(PriceCalculation calc) {
-    final color = _getOrangeColor(calc.orangeType);
-    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [color.withValues(alpha: 0.7), color],
-                ),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                _getOrangeIcon(calc.orangeType),
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                calc.orangeName,
-                style: const TextStyle(fontSize: 20),
-              ),
-            ),
-          ],
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusL)),
+        backgroundColor: AppTheme.cardBackground,
+        title: Text(
+          calc.orangeName,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildDetailRow('น้ำหนัก', '${calc.weightKg.toStringAsFixed(2)} กก.'),
-            const Divider(),
-            _buildDetailRow('ราคาต่อกิโลกรัม', '฿${calc.pricePerKg.toStringAsFixed(2)}'),
-            const Divider(),
-            _buildDetailRow(
-              'ราคารวม',
-              '฿${calc.totalPrice.toStringAsFixed(2)}',
-              isTotal: true,
-            ),
-            const Divider(),
-            _buildDetailRow(
-              'วันที่',
-              DateFormat('dd/MM/yyyy HH:mm:ss').format(calc.date),
-            ),
+            Divider(color: AppTheme.dividerColor, height: 28),
+            _buildDetailRow('ราคาต่อกก.', '฿${calc.pricePerKg.toStringAsFixed(2)}'),
+            Divider(color: AppTheme.dividerColor, height: 28),
+            _buildDetailRow('ราคารวม', '฿${calc.totalPrice.toStringAsFixed(2)}', isTotal: true),
+            Divider(color: AppTheme.dividerColor, height: 28),
+            _buildDetailRow('วันที่', DateFormat('dd/MM/yyyy HH:mm').format(calc.date)),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('ปิด'),
+            child: const Text('ปิด', style: TextStyle(color: AppTheme.textSecondary, fontSize: 16)),
           ),
         ],
       ),
@@ -581,29 +506,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Widget _buildDetailRow(String label, String value, {bool isTotal = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: isTotal ? 16 : 14,
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-              color: Colors.grey.shade700,
-            ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: isTotal ? 17 : 16,
+            fontWeight: isTotal ? FontWeight.w600 : FontWeight.normal,
+            color: AppTheme.textTertiary,
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: isTotal ? 18 : 14,
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.w600,
-              color: isTotal ? AppTheme.primaryColor : Colors.black87,
-            ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: isTotal ? 18 : 16,
+            fontWeight: isTotal ? FontWeight.w700 : FontWeight.w600,
+            color: isTotal ? AppTheme.primaryColor : AppTheme.textPrimary,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
