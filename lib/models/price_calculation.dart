@@ -40,16 +40,12 @@ class PriceCalculation {
     return PriceCalculation(
       id: 0,
       docId: doc.id,
-      orangeType: data['orangeType'] ?? data['orange_type'] ?? '',
-      orangeName: data['orangeName'] ?? data['orange_name'] ?? '',
-      weightKg: (data['weightKg'] ?? data['weight_kg'] as num? ?? 0).toDouble(),
-      pricePerKg: (data['pricePerKg'] ?? data['price_per_kg'] as num? ?? 0).toDouble(),
-      totalPrice: (data['totalPrice'] ?? data['total_price'] as num? ?? 0).toDouble(),
-      date: data['timestamp'] != null
-          ? (data['timestamp'] as Timestamp).toDate()
-          : data['date'] != null
-              ? (data['date'] as Timestamp).toDate()
-              : DateTime.now(),
+      orangeType: data['orange_type'] ?? '',
+      orangeName: data['orange_name'] ?? '',
+      weightKg: (data['weight_kg'] as num).toDouble(),
+      pricePerKg: (data['price_per_kg'] as num).toDouble(),
+      totalPrice: (data['total_price'] as num).toDouble(),
+      date: (data['date'] as Timestamp).toDate(),
     );
   }
 
