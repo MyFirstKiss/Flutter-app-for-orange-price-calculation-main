@@ -1,5 +1,13 @@
 # 🍊 Orange Calculator Application
 
+![Flutter](https://img.shields.io/badge/Flutter-3.0+-02569B?logo=flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-3.0+-0175C2?logo=dart&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-Firestore-FFCA28?logo=firebase&logoColor=black)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
+![Version](https://img.shields.io/badge/Version-v1.0.0-orange)
+
 **Flutter + FastAPI + Firebase** | Android & iOS
 
 A mobile application for orange price calculation, real-time market data tracking, and cloud-synced calculation history.
