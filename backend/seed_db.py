@@ -19,7 +19,7 @@ def seed_data():
         existing = db.query(OrangeType).first()
         if existing:
             print("⚠️  Database already has data.")
-            print(f"   Found: {existing.name} @ {existing.price_per_kg} บาท/กก.")
+            print(f"   Found: {existing.name} @ {existing.price_per_kg} THB/kg")
             user_input = input("   Do you want to re-seed? (y/n): ")
             if user_input.lower() != 'y':
                 return
@@ -33,23 +33,23 @@ def seed_data():
         orange_types_data = [
             {
                 "orange_id": "tangerine",
-                "name": "ส้มสายน้ำผึ้ง",
+                "name": "Tangerine",
                 "price_per_kg": 45.0,
-                "color": "ส้ม",
+                "color": "Orange",
                 "grade": "A+"
             },
             {
                 "orange_id": "green-sweet",
-                "name": "ส้มเขียวหวาน",
+                "name": "Green Sweet Orange",
                 "price_per_kg": 35.0,
-                "color": "เขียว",
+                "color": "Green",
                 "grade": "A"
             },
             {
                 "orange_id": "mandarin",
-                "name": "ส้มแมนดาริน",
+                "name": "Mandarin Orange",
                 "price_per_kg": 55.0,
-                "color": "ส้มอ่อน",
+                "color": "Light Orange",
                 "grade": "A+"
             }
         ]

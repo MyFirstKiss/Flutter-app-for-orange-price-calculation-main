@@ -1,39 +1,40 @@
-# Orange Calculator Application
+# 🍊 Orange Calculator Application
+
+**Flutter + FastAPI + Firebase** | Android & iOS
+
+A mobile application for orange price calculation, real-time market data tracking, and cloud-synced calculation history.
 
 ## 📚 Additional Documentation
 - 📘 [Installation Guide](INSTALLATION.md)
 - ⚙️ [Backend Documentation](backend/README.md)
 - 📝 [Changelog](CHANGELOG.md)
 
-**Flutter + FastAPI** | **Platform Status**
-
-A mobile application developed using Flutter for orange price calculation and real-time market data tracking.
-
 ---
 
-## � Summary
+## 📋 Summary
 
-This project is a **cross-platform mobile application** that combines Flutter frontend with FastAPI backend to provide orange price information and calculation services. The system scrapes real-time market data from Talaadthai.com, stores it in SQLite database, and presents it through an intuitive mobile interface.
+This project is a **cross-platform mobile application** combining a Flutter frontend with a FastAPI backend and Firebase Cloud Firestore for seamless cloud data sync. The system scrapes real-time market data from Talaadthai.com, persists calculation history to Firestore, and presents everything through a modern gradient-based UI.
 
 **Key Highlights:**
-- 🍊 3 orange types supported (Tangerine, Green Sweet, Mandarin)
+- 🍊 3 orange types supported (Tangerine, Green Sweet Orange, Mandarin Orange)
 - 💰 Real-time price scraping from Talaadthai.com
-- 🧮 Weight-based price calculator
+- 🧮 Weight-based price calculator with Firestore save
+- 📜 Cloud-synced calculation history (Firebase Cloud Firestore)
 - 📱 Native Android & iOS apps
 - 🔄 1-hour data caching with fallback mechanism
-- 🎨 Material Design 3 UI
+- 🎨 Unified gradient UI across all screens (Material Design 3)
 
-**Technologies:** Flutter (Dart), FastAPI (Python), BeautifulSoup4, SQLite, Material Design 3
+**Technologies:** Flutter (Dart), FastAPI (Python), Firebase Cloud Firestore, BeautifulSoup4, SQLite, Material Design 3
 
 ---
 
-## �📑 Table of Contents
+## 📄 Table of Contents
 - [Project Overview](#-project-overview)
 - [Features](#-features)
 - [Tech Stack](#-tech-stack)
 - [System Architecture](#-system-architecture)
 - [Project Structure](#-project-structure)
-- [Installation & Setup](#️-installation--setup)
+- [Installation & Setup](#-installation--setup)
 - [Database Design](#-database-design)
 - [Application Workflow](#-application-workflow)
 - [Data Source & Caching](#-data-source--caching)
@@ -45,32 +46,31 @@ This project is a **cross-platform mobile application** that combines Flutter fr
 
 ## 📌 Project Overview
 
-The Orange Calculator Application helps users browse orange information, calculate prices by weight, and check the latest market prices.  
-It integrates FastAPI backend with web scraping capabilities to fetch real-time data from Talaadthai.com.
+The Orange Calculator Application helps users browse orange information, calculate prices by weight, and check the latest market prices. Calculation history is saved to Firebase Cloud Firestore and streamed in real-time to the History screen.
 
 ### Main Objectives
 - Present orange data (dimensions, sizes, prices) in a clear, organized way
 - Provide quick price calculation based on weight (kilograms)
+- Save every calculation to Firebase Cloud Firestore automatically
 - Show real-time market prices from Talaadthai.com
-- Demonstrate Flutter + FastAPI integration
 - Support mobile platforms (Android & iOS)
 
 ### Supported Orange Types
-1. **Tangerine (ส้มสายน้ำผึ้ง)** - Sweet and juicy, soft texture, high water content
-2. **Green Sweet Orange (ส้มเขียวหวาน)** - Sweet and crispy, refreshing, not sour
-3. **Mandarin (ส้มแมนดาริน)** - Sweet aroma, easy to peel, fine texture
+1. **Tangerine** — Sweet and juicy, soft texture, high water content
+2. **Green Sweet Orange** — Sweet and crispy, refreshing, not sour
+3. **Mandarin Orange** — Sweet aroma, easy to peel, fine texture
 
 ---
 
 ## 🚀 Features
 
-- 📊 **Data Display** - View dimensions and sizes of 3 orange types
-- 🧮 **Price Calculator** - Calculate price based on weight (kg)
-- 💰 **Live Prices** - Real-time price updates from Talaadthai.com
-- 🌐 **Web Scraping** - Automated data fetching with fallback mechanism
-- 📱 **Mobile-First** - Android and iOS support
-- 🔄 **Auto-Refresh** - Price data cached for 1 hour
-- 📈 **Dashboard** - Overview statistics and quick actions
+- 📊 **Orange Data** — View dimensions and sizes of 3 orange types
+- 🧮 **Price Calculator** — Calculate price based on weight (kg); results saved to Firestore
+- 📜 **History** — Real-time stream of past calculations from Cloud Firestore (swipe to delete)
+- 💰 **Live Prices** — Real-time price updates from Talaadthai.com via FastAPI
+- 🌐 **Web Scraping** — Automated data fetching with 1-hour cache and fallback
+- 📱 **Mobile-First** — Android and iOS support
+- 🎨 **Gradient UI** — Each screen has a matching gradient hero (orange/green/blue/purple)
 
 ---
 
@@ -79,17 +79,22 @@ It integrates FastAPI backend with web scraping capabilities to fetch real-time 
 **Frontend (Flutter)**
 - Flutter 3.0+ (Dart)
 - Material Design 3
-- HTTP Package
+- `http: ^1.2.2`
+- `intl: ^0.19.0`
+- `firebase_core: ^4.4.0`
+- `cloud_firestore: ^6.1.2`
 
 **Backend (Python)**
 - FastAPI 0.115.0
 - BeautifulSoup4 4.12.3 (Web Scraping)
+- SQLAlchemy 2.0.25
 - Uvicorn 0.32.0 (ASGI Server)
 - Requests 2.32.3
 - Pydantic 2.9.2
 
-**Database**
-- SQLite (Backend storage)
+**Cloud / Database**
+- Firebase Cloud Firestore (calculation history)
+- SQLite (backend orange data)
 
 ---
 
@@ -97,13 +102,17 @@ It integrates FastAPI backend with web scraping capabilities to fetch real-time 
 
 **Layered Architecture:**
 
-1. **UI Layer** - Flutter Screens (Home, Data, Calculator, Live Prices)
-2. **Service Layer** - API Service (HTTP communication)
-3. **Backend Layer** - FastAPI (REST API + Web Scraping)
-4. **Data Layer** - SQLite Database
+1. **UI Layer** — Flutter Screens (Home, Data, Calculator, Live Prices, History)
+2. **Service Layer** — `ApiService` (HTTP to FastAPI) + `FirebaseService` (Firestore CRUD)
+3. **Backend Layer** — FastAPI (REST API + Web Scraping)
+4. **Data Layer** — Cloud Firestore + SQLite
 
-**Data Flow:**  
-User → Flutter UI → API Service → FastAPI → Talaadthai.com / SQLite → FastAPI → Flutter UI
+**Data Flow:**
+```
+User → Flutter UI
+  ├─► ApiService      → FastAPI → Talaadthai.com / SQLite
+  └─► FirebaseService → Cloud Firestore
+```
 
 ---
 
@@ -111,6 +120,7 @@ User → Flutter UI → API Service → FastAPI → Talaadthai.com / SQLite → 
 
 ```
 lib/
+├── firebase_options.dart
 ├── main.dart
 ├── models/
 │   ├── orange_type.dart
@@ -120,7 +130,8 @@ lib/
 │   ├── data_screen.dart
 │   ├── calculator_screen.dart
 │   ├── history_screen.dart
-│   └── live_prices_screen.dart
+│   ├── live_prices_screen.dart
+│   └── firebase_service.dart
 ├── services/
 │   └── api_service.dart
 ├── utils/
@@ -147,92 +158,78 @@ flutter run
 ```
 
 **Backend:**
-- Setup FastAPI backend
-- Install Python dependencies: `pip install -r requirements.txt`
-- Seed database: `python seed_db.py`
-- Run server: `python main.py`
+```bash
+cd backend
+pip install -r requirements.txt
+python seed_db.py    # Seed initial orange data
+python main.py       # Start FastAPI server on port 8001
+```
 
-**Important:** For Android Emulator, app connects to backend at `10.0.2.2:8001`
+> **Note:** For Android emulator, the app connects to the backend at `10.0.2.2:8001`
+
+**Firebase:**
+- Firebase project must be configured with `google-services.json` (Android) and `GoogleService-Info.plist` (iOS)
+- Firestore collection used: `calculations`
 
 ---
 
 ## 📊 Database Design
 
-**SQLite (Backend):**
+**Cloud Firestore — `calculations` collection:**
 
-**oranges:**
-- id
-- name
-- price_per_kg
-- height
-- radius
-- diameter
+| Field | Type | Description |
+|-------|------|-------------|
+| `orangeType` | String | Orange type ID (e.g. `tangerine`) |
+| `orangeName` | String | Display name |
+| `weightKg` | Number | Weight in kg |
+| `pricePerKg` | Number | Price per kg |
+| `totalPrice` | Number | Calculated total |
+| `timestamp` | Timestamp | Server timestamp |
 
-**calculations:**
-- id
-- orange_id
-- weight_kg
-- total_price
-- timestamp
+**SQLite — Backend:**
+- `orange_types` — id, name, price_per_kg, color, grade
+- `orange_measurements` — orange_id, height_cm, radius_cm, diameter_cm, weight_avg_g
 
 ---
 
 ## 🔄 Application Workflow
 
-1. Launch App
-2. Browse Orange Data
-3. Calculate Price
-4. View Live Prices
-5. Check History
+1. Launch App → Home screen with stats and 2×2 grid menu
+2. **Orange Data** → Browse size/dimension info of each orange type
+3. **Calculate Price** → Enter weight → result calculated and saved to Firestore
+4. **Live Prices** → Fetch real-time prices from Talaadthai.com via FastAPI
+5. **History** → View all past calculations streamed live from Firestore; swipe to delete
 
 ---
 
 ## 🧾 Data Source & Caching
 
-- Price data fetched from Talaadthai.com
+- Price data fetched from Talaadthai.com via BeautifulSoup4
 - Prices cached for 1 hour to reduce scraping load
-- Fallback data used if website unavailable
+- Fallback static data used if website is unavailable
 
 ---
 
 ## 📡 API Endpoints
 
-Backend provides these endpoints:
-
-- `GET /` - Health check
-- `GET /oranges` - Filtered prices from Talaadthai
-- `GET /api/oranges` - Orange data for the app
-- `GET /api/oranges/{id}` - Single orange data
-- `POST /api/calculate` - Price calculation
-- `GET /api/prices` - Real-time prices
-
----
-
-## 🚀 Deployment Diagram
-
-```
-[ Android / iOS Device ]
-         |
-         ▼
-[ Flutter Application ]
-         |
-         ▼
-[ FastAPI Backend ]
-    |          |
-    ▼          ▼
-[ SQLite ]  [ Talaadthai.com ]
-              (Web Scraping)
-```
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | Health check |
+| GET | `/oranges` | Filtered prices from Talaadthai |
+| GET | `/api/oranges` | Orange data for the app |
+| GET | `/api/oranges/{id}` | Single orange data |
+| POST | `/api/calculate` | Price calculation |
+| GET | `/api/prices` | Real-time prices |
 
 ---
 
 ## 📈 Future Improvements
 
-- Real-time price alerts
 - Price trend charts
-- Multi-language support
+- Push notifications for price alerts
 - User authentication
-- Offline mode
+- Offline mode with local cache
+- Export history to CSV
 
 ---
 
@@ -244,13 +241,13 @@ Backend provides these endpoints:
 
 ## 👨‍💻 Developer
 
-Student Project – Information Technology
+Student Project — Information Technology
 
 ---
 
 ## 📄 License
 
-MIT License - Educational use only
+MIT License — Educational use only
 
 ---
 
