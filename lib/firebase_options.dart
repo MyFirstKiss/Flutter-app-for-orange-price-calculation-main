@@ -2,7 +2,7 @@
 // ignore_for_file: type=lint
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, kIsWeb, TargetPlatform;
+    show defaultTargetPlatform, TargetPlatform;
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -16,23 +16,11 @@ import 'package:flutter/foundation.dart'
 /// ```
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
-    if (kIsWeb) {
-      return web;
-    }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
         return ios;
-      case TargetPlatform.macOS:
-        return macos;
-      case TargetPlatform.windows:
-        return windows;
-      case TargetPlatform.linux:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for linux - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
       default:
         throw UnsupportedError(
           'DefaultFirebaseOptions are not supported for this platform.',
@@ -46,33 +34,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '166889945227',
     projectId: 'orangepriceapp',
     storageBucket: 'orangepriceapp.firebasestorage.app',
-  );
-
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDdQTeKlcqgFjgXnyZmukHq2Sdt5sZW2LQ',
-    appId: '1:166889945227:web:cea2fd1a1a2077ef74bc8e',
-    messagingSenderId: '166889945227',
-    projectId: 'orangepriceapp',
-    authDomain: 'orangepriceapp.firebaseapp.com',
-    storageBucket: 'orangepriceapp.firebasestorage.app',
-  );
-
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDdQTeKlcqgFjgXnyZmukHq2Sdt5sZW2LQ',
-    appId: '1:166889945227:web:cea2fd1a1a2077ef74bc8e',
-    messagingSenderId: '166889945227',
-    projectId: 'orangepriceapp',
-    authDomain: 'orangepriceapp.firebaseapp.com',
-    storageBucket: 'orangepriceapp.firebasestorage.app',
-  );
-
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyB03ps9rN6984kcYm1mLke_LKMK-pmflkw',
-    appId: '1:166889945227:ios:af841a878e8b16bd74bc8e',
-    messagingSenderId: '166889945227',
-    projectId: 'orangepriceapp',
-    storageBucket: 'orangepriceapp.firebasestorage.app',
-    iosBundleId: 'com.example.orangecalculatorapp',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(

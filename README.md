@@ -6,6 +6,7 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
+![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS-brightgreen?logo=android&logoColor=white)
 ![Version](https://img.shields.io/badge/Version-v1.0.0-orange)
 
 **Flutter + FastAPI + Firebase** | Android & iOS
@@ -21,7 +22,7 @@ A mobile application for orange price calculation, real-time market data trackin
 
 ## 📋 Summary
 
-This project is a **cross-platform mobile application** combining a Flutter frontend with a FastAPI backend and Firebase Cloud Firestore for seamless cloud data sync. The system scrapes real-time market data from Talaadthai.com, persists calculation history to Firestore, and presents everything through a modern gradient-based UI.
+This project is a **mobile application (Android & iOS only)** combining a Flutter frontend with a FastAPI backend and Firebase Cloud Firestore for seamless cloud data sync. The system scrapes real-time market data from Talaadthai.com, persists calculation history to Firestore, and presents everything through a modern gradient-based UI.
 
 **Key Highlights:**
 - 🍊 3 orange types supported (Tangerine, Green Sweet Orange, Mandarin Orange)
@@ -77,7 +78,7 @@ The Orange Calculator Application helps users browse orange information, calcula
 - 📜 **History** — Real-time stream of past calculations from Cloud Firestore (swipe to delete)
 - 💰 **Live Prices** — Real-time price updates from Talaadthai.com via FastAPI
 - 🌐 **Web Scraping** — Automated data fetching with 1-hour cache and fallback
-- 📱 **Mobile-First** — Android and iOS support
+- 📱 **Android & iOS Only** — Web, Windows, macOS, and Linux are not supported
 - 🎨 **Gradient UI** — Each screen has a matching gradient hero (orange/green/blue/purple)
 
 ---
